@@ -1,5 +1,5 @@
-"""The EMUS package is a collection of scripts and tools based on the
-Eigenvector Method of Umbrella Sampling (EMUS).
+"""The PyEDGAR package is a collection of scripts and tools for constructing
+Galerkin approximations on trajectory data.
 
 """
 
@@ -10,6 +10,5 @@ __email__ = "thiede@uchicago.edu"
 
 import diffusion_map
 import galerkin
-#import linalg
-#import usutils
 
+# GO BACK TO THIS!
