@@ -3,6 +3,7 @@
 A collection of useful functions  for manipulating trajectory data and dynamical basis set objects.
 @author: Erik
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 def tlist_to_flat(trajs):
     """Flattens a list of two dimensional trajectories into a single two dimensional datastructure, and returns it along with a list of tuples giving the locations of each trajectory.
@@ -46,7 +47,7 @@ def delay_embed(traj_data,n_embed,lag=1,verbosity=0):
     Parameters
     ----------
     traj_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array 
-        Dynamical data on which to perform the delay embedding.  This can be of multiple types; if the type is not a dataset object, the type dictates the format of the data.  See documentation in ???? for more details. 
+        Dynamical data on which to perform the delay embedding.  This can be of multiple types; if the type is not a dataset object, the type dictates the format of the data.  See documentation for the dynamical dataset object for the types.
     n_embed : int
         The number of delay embeddings to perform.
     lag : int, optional
