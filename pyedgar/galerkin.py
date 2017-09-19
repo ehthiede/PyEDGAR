@@ -5,9 +5,6 @@ Routines for constructing estimates of dynamical quantities on trajectory data u
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-class dynamical_dataset(object):
-    def __init__(self):
-        pass
 
 def get_mfpt(basis,state_A,lag=1,dt=1.):
     """Calculates the mean first passage time into state A as a function of each point.
