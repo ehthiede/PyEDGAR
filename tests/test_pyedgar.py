@@ -1,6 +1,10 @@
+import pytest
 
-import pyedgar
-
-
-def test_main():
-    assert pyedgar  # use your library here
+def test_pyedgar():
+    # Check that packages we want are importable. 
+    import pyedgar
+    assert pyedgar  
+    assert pyedgar.data_manipulation
+    assert pyedgar.diffusion_map
+    assert pyedgar.galerkin
+    assert pyedgar.DynamicalDataset
