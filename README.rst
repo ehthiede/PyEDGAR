@@ -47,7 +47,7 @@ Overview
 
 .. end-badges
 
-Package for performing dynamical Galerkin expansion on trajectory data.
+Package for performing dynamical Galerkin expansion on trajectory data.  Currently in pre-alpha, all very much in development. 
 
 * Free software: MIT license
 
@@ -57,6 +57,8 @@ Installation
 ::
 
     pip install pyedgar
+
+At least, this would work if the package was on pip.  Again, everything is in pre-alpha.
 
 Documentation
 =============
