@@ -1,8 +1,9 @@
 from __future__ import division
-from pyparsing import (Literal, CaselessLiteral, Word, Combine, Group, Optional,
-                       ZeroOrMore, Forward, nums, alphas, oneOf)
+
 import math
 import operator
+
+from pyparsing import CaselessLiteral, Combine, Forward, Group, Literal, Optional, Word, ZeroOrMore, alphas, nums, oneOf
 
 __author__ = 'Paul McGuire, unutbu'
 __version__ = '$Revision: 0.0 $'

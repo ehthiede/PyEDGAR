@@ -3,7 +3,7 @@ Galerkin approximations on trajectory data."""
 from __future__ import absolute_import
 
 # Set explicit packages
-from . import galerkin, diffusion_map, data_manipulation
+from . import data_manipulation, diffusion_map, galerkin
 from .dataset import DynamicalDataset
 
 __author__ = "Erik Henning Thiede"
