@@ -1,4 +1,4 @@
-import pytest
+# Basic package tests
 
 
 def test_pyedgar():
