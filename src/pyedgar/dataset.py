@@ -5,11 +5,13 @@ Class definitions for the dynamical dataset object used to store and work with d
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+
 class DynamicalDataset(object):
     """
     This object aims to provide a handy framework for dealing with dynamical data.
     """
-    def __init__(self,data,lag=1):
+
+    def __init__(self, data, lag=1):
         """ Initiates the dynamical dataset.
 
         Parameters
@@ -22,8 +24,7 @@ class DynamicalDataset(object):
         """
         pass
 
-
-    def compute_generator(self,lag=None):
+    def compute_generator(self, lag=None):
         """ Computes a Galerkin approximation of the generator.
 
         Returns
@@ -34,7 +35,7 @@ class DynamicalDataset(object):
         """
         return
 
-    def compute_transop(self,lag=None):
+    def compute_transop(self, lag=None):
         """ Computes a Galerkin approximation of the transfer operator.
 
         Returns
@@ -45,7 +46,7 @@ class DynamicalDataset(object):
         """
         return
 
-    def initial_inner_product(self,dynamical_data):
+    def initial_inner_product(self, dynamical_data):
         """ Calculates the inner product of a function against the given dynamical dataset.
 
         Parameters
@@ -84,4 +85,3 @@ class DynamicalDataset(object):
 
         """
         return
-

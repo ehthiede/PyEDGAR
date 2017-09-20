@@ -6,7 +6,7 @@ Routines for constructing estimates of dynamical quantities on trajectory data u
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 
-def get_mfpt(basis,state_A,lag=1,dt=1.):
+def get_mfpt(basis, state_A, lag=1, dt=1.):
     """Calculates the mean first passage time into state A as a function of each point.
 
     Parameters
@@ -19,7 +19,7 @@ def get_mfpt(basis,state_A,lag=1,dt=1.):
         Number of timepoints in the future to use for the finite difference in the discrete-time generator.
     dt : scalar, optional
         Time between timepoints in the trajectory data.
-    
+
 
     Returns
     -------
@@ -29,7 +29,8 @@ def get_mfpt(basis,state_A,lag=1,dt=1.):
     """
     return
 
-def get_committor(basis,stateA,stateB,test_fxn=None,lag=1):
+
+def get_committor(basis, stateA, stateB, test_fxn=None, lag=1):
     """Calculates the mean first passage time into state A as a function of each point.
 
     Parameters
@@ -54,7 +55,7 @@ def get_committor(basis,stateA,stateB,test_fxn=None,lag=1):
     return
 
 
-def get_stationary_distrib(basis,lag=1):
+def get_stationary_distrib(basis, lag=1):
     """Calculates the value of the stationary distribution for each datapoint.
 
     Parameters
@@ -73,7 +74,7 @@ def get_stationary_distrib(basis,lag=1):
     return
 
 
-def get_esystem(basis,lag=1,left=False,right=True):
+def get_esystem(basis, lag=1, left=False, right=True):
     """Calculates the eigenvectors and eigenvalues of the generator through Galerkin expansion.
 
     Parameters

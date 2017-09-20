@@ -1,9 +1,10 @@
 import pytest
 
+
 def test_pyedgar():
-    # Check that packages we want are importable. 
+    # Check that packages we want are importable.
     import pyedgar
-    assert pyedgar  
+    assert pyedgar
     assert pyedgar.data_manipulation
     assert pyedgar.diffusion_map
     assert pyedgar.galerkin

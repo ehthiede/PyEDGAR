@@ -6,11 +6,13 @@ Routines and Class definitions for constructing basis sets using the diffusion m
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 
+
 class DiffusionAtlas(object):
     """
     The diffusion atlas is a factory object for constructing diffusion map bases with various boundary conditions.
     """
-    def __init__(self,nneighbors=600,rho=None,point_weights=None,d=None,alpha='0',beta='-1/(d+2)',epses=2.**np.arange(-40,41),rho_norm=True,metric='euclidean',metric_params=None):
+
+    def __init__(self, nneighbors=600, rho=None, point_weights=None, d=None, alpha='0', beta='-1/(d+2)', epses=2.**np.arange(-40, 41), rho_norm=True, metric='euclidean', metric_params=None):
         """Constructs the factory object.  The factory object can then be called to make diffusion map bases of various boundary conditions.
 
         Parameters
@@ -39,7 +41,7 @@ class DiffusionAtlas(object):
         """
         pass
 
-    def fit(self,data):
+    def fit(self, data):
         """ Constructs the diffusion map on the dataset.
 
         Parameters
@@ -48,9 +50,9 @@ class DiffusionAtlas(object):
             Two-dimensional dataset used to create the diffusion map.
 
         """
-        return 
+        return
 
-    def make_dirichlet_basis(self,in_domain,k):
+    def make_dirichlet_basis(self, in_domain, k):
         """ Creates a diffusion map basis set that obeys the homogeneous Dirichlet boundary conditions on the domain.  This is done by taking the eigenfunctions of the diffusion map submatrix on the domain. 
 
         Parameters
@@ -68,7 +70,7 @@ class DiffusionAtlas(object):
         """
         return
 
-    def extend_oos(coords,function_values):
+    def extend_oos(coords, function_values):
         """ Performs out-of-sample extension for given values of a function.
 
         Parameters
@@ -77,7 +79,7 @@ class DiffusionAtlas(object):
             The new coordinates upon which to perform the out-of-sample extension.
         function_values : 1d array
             The value of the function at each point in the diffusion map.
-        
+
         Returns
         -------
         new_values : 1d array
@@ -85,5 +87,3 @@ class DiffusionAtlas(object):
 
         """
         return
-
-
