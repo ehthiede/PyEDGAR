@@ -53,9 +53,8 @@ class _NumericStringParser(object):
         pi = CaselessLiteral("PI")
         expr = Forward()
         atom = ((Optional(oneOf("- +")) +
-                 (ident + lpar + expr + rpar | pi | e | fnumber).setParseAction(self.pushFirst))
-                | Optional(oneOf("- +")) + Group(lpar + expr + rpar)
-                ).setParseAction(self.pushUMinus)
+                (ident + lpar + expr + rpar | pi | e | fnumber).setParseAction(self.pushFirst)) | Optional(oneOf("- +")) +
+                Group(lpar + expr + rpar)).setParseAction(self.pushUMinus)
         # by defining exponentiation as "atom [ ^ factor ]..." instead of
         # "atom [ ^ atom ]...", we get right-to-left exponents, instead of left-to-right
         # that is, 2^3^2 = 2^(3^2), not (2^3)^2.
@@ -84,7 +83,7 @@ class _NumericStringParser(object):
                    "abs": abs,
                    "trunc": lambda a: int(a),
                    "round": round,
-                   "sgn": lambda a: abs(a) > epsilon and cmp(a, 0) or 0}
+                   "sgn": lambda a: abs(a) > epsilon and ((a > 0) - (a < a)) or 0}
 
     def evaluateStack(self, s):
         op = s.pop()
