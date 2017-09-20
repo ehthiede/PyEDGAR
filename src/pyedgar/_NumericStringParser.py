@@ -18,10 +18,7 @@ for parsing string input into math in a safe way.
 
 
 class _NumericStringParser(object):
-    '''
-    Most of this code comes from the fourFn.py pyparsing example
-
-    '''
+    """Most of this code comes from the fourFn.py pyparsing example."""
 
     def pushFirst(self, strg, loc, toks):
         self.exprStack.append(toks[0])
@@ -31,15 +28,12 @@ class _NumericStringParser(object):
             self.exprStack.append('unary -')
 
     def __init__(self):
-        """
-        expop   :: '^'
-        multop  :: '*' | '/'
-        addop   :: '+' | '-'
-        integer :: ['+' | '-'] '0'..'9'+
-        atom    :: PI | E | real | fn '(' expr ')' | '(' expr ')'
-        factor  :: atom [ expop factor ]*
-        term    :: factor [ multop factor ]*
-        expr    :: term [ addop term ]*
+        """expop   :: '^' multop  :: '*' | '/' addop   :: '+' | '-' integer ::
+
+        ['+' | '-'] '0'..'9'+ atom    :: PI | E | real | fn '(' expr ')'
+        | '(' expr ')' factor  :: atom [ expop factor ]* term    ::
+        factor [ multop factor ]* expr    :: term [ addop term ]*
+
         """
         point = Literal(".")
         e = CaselessLiteral("E")

@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
-"""
-A collection of useful functions  for manipulating trajectory data and dynamical basis set objects.
+"""A collection of useful functions  for manipulating trajectory data and
+dynamical basis set objects.
+
 @author: Erik
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 
 def tlist_to_flat(trajs):
-    """Flattens a list of two dimensional trajectories into a single two dimensional datastructure, and returns it along with a list of tuples giving the locations of each trajectory.
+    """Flattens a list of two dimensional trajectories into a single two
+    dimensional datastructure, and returns it along with a list of tuples
+    giving the locations of each trajectory.
 
     Parameters
     ----------
@@ -26,7 +30,8 @@ def tlist_to_flat(trajs):
 
 
 def flat_to_tlist(traj_2d, traj_edges):
-    """Takes a flattened trajectory with stop and start points and reformats it into a list of separate trajectories.
+    """Takes a flattened trajectory with stop and start points and reformats it
+    into a list of separate trajectories.
 
     Parameters
     ----------
@@ -45,11 +50,12 @@ def flat_to_tlist(traj_2d, traj_edges):
 
 
 def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
-    """Performs delay embedding on the trajectory data.  Takes in trajectory data of format types, and returns the delay embedded data in the same type.
+    """Performs delay embedding on the trajectory data.  Takes in trajectory
+    data of format types, and returns the delay embedded data in the same type.
 
     Parameters
     ----------
-    traj_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array 
+    traj_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array
         Dynamical data on which to perform the delay embedding.  This can be of multiple types; if the type is not a dataset object, the type dictates the format of the data.  See documentation for the dynamical dataset object for the types.
     n_embed : int
         The number of delay embeddings to perform.
@@ -60,7 +66,7 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
 
     Returns
     -------
-    embedded_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array 
+    embedded_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array
         Dynamical data with delay embedding performed, of the same type as the trajectory data.
 
     """

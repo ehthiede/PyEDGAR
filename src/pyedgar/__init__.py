@@ -1,7 +1,5 @@
 """The PyEDGAR package is a collection of scripts and tools for constructing
-Galerkin approximations on trajectory data.
-
-"""
+Galerkin approximations on trajectory data."""
 from __future__ import absolute_import
 
 # Set explicit packages
