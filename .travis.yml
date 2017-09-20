@@ -22,9 +22,6 @@ matrix:
     - python: '3.6'
       env:
         - TOXENV=py36,report
-    - python: 'pypy-5.4'
-      env:
-        - TOXENV=pypy,report
 before_install:
   - python --version
   - uname -a
