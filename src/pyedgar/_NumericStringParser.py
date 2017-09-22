@@ -54,7 +54,7 @@ class _NumericStringParser(object):
         pi = CaselessLiteral("PI")
         expr = Forward()
         atom = ((Optional(oneOf("- +")) +
-                (ident + lpar + expr + rpar | pi | e | fnumber).setParseAction(self.pushFirst)) | Optional(oneOf("- +")) +
+                 (ident + lpar + expr + rpar | pi | e | fnumber).setParseAction(self.pushFirst)) | Optional(oneOf("- +")) +
                 Group(lpar + expr + rpar)).setParseAction(self.pushUMinus)
         # by defining exponentiation as "atom [ ^ factor ]..." instead of
         # "atom [ ^ atom ]...", we get right-to-left exponents, instead of left-to-right
