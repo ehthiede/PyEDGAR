@@ -65,7 +65,7 @@ def flat_to_tlist(traj_2d, traj_edges):
     """
     trajs = []
     ntraj = len(traj_edges) - 1
-    for i in xrange(ntraj):
+    for i in range(ntraj):
         start = traj_edges[i]
         stop = traj_edges[i + 1]
         trajs.append(traj_2d[start:stop])
