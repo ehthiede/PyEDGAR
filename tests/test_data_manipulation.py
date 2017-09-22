@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from pyedgar import data_manipulation as manip
-import pytest
 import numpy as np
+import pytest
+
+from pyedgar import data_manipulation as manip
 
 
 @pytest.fixture
