@@ -3,7 +3,7 @@
 Test functions for testing the dynamical dataset object class.
 
 TODO:
-    - Parameterize this code!
+    - Parameterize this code?
     - Implement tests for returning datastructurs
     - Implement tests for initial / final split
 """
@@ -11,18 +11,30 @@ TODO:
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
+import pytest
 
 from pyedgar import DynamicalDataset
 
+lags = [None] + range(1, 4)
+timesteps = [None, 1., 0.5, 2, 1E4]
+
 
 class TestDatasetCreation(object):
-    def test_from_flat(self, working_flat_and_tlist):
+    @pytest.mark.parametrize('lag', lags)
+    @pytest.mark.parametrize('timestep', timesteps)
+    def test_from_flat(self, working_flat_and_tlist, lag, timestep):
         flat, traj_edges, tlist = working_flat_and_tlist
-        DS_from_flat = DynamicalDataset((flat, traj_edges))
+        DS_from_flat = DynamicalDataset((flat, traj_edges), lag=lag, timestep=timestep)
         assert(np.all(DS_from_flat.traj_edges == traj_edges))
         assert(np.all(DS_from_flat.flat_traj == flat))
-        assert(np.all(DS_from_flat.lag == 1))
-        assert(np.all(DS_from_flat.timestep == 1.))
+        if lag is None:
+            assert(np.all(DS_from_flat.lag == 1))
+        else:
+            assert(np.all(DS_from_flat.lag == lag))
+        if timestep is None:
+            assert(np.all(DS_from_flat.timestep == 1.))
+        else:
+            assert(np.all(DS_from_flat.timestep == timestep))
 
     def test_from_tlist(self, working_flat_and_tlist):
         flat, traj_edges, tlist = working_flat_and_tlist

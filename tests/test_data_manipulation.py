@@ -22,6 +22,3 @@ def test_flat_to_tlist__basic_functionality(working_flat_and_tlist):
     test_tlist = manip.flat_to_tlist(flat, traj_edges)
     for test_traj, traj in zip(test_tlist, tlist):
         assert(not (test_traj - traj).any())
-
-
-#
