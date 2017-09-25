@@ -61,7 +61,7 @@ setup(
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
     install_requires=[
-        'numpy', 'scipy'
+        'numpy', 'scipy', 'pyparsing'
     ],
     extras_require={
         # eg:
