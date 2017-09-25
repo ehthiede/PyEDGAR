@@ -7,12 +7,15 @@ with dynamical data.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import numpy as np
+from pyedgar import data_manipulation as manip
+
 
 class DynamicalDataset(object):
     """This object aims to provide a handy framework for dealing with dynamical
     data."""
 
-    def __init__(self, data, lag=1):
+    def __init__(self, data, lag=1, timestep=1.):
         """Initiates the dynamical dataset.
 
         Parameters
@@ -23,10 +26,28 @@ class DynamicalDataset(object):
             Number of timepoints in the future to use for the finite difference in the discrete-time generator.
 
         """
-        pass
+        self.lag = lag
+        self.timestep = timestep
+
+        if type(data) is tuple:
+            flat_traj, traj_edges = data
+        elif type(data) is list:
+            flat_traj, traj_edges = manip.tlist_to_flat(data)
+        elif type(data) is np.ndarray:
+            flat_traj = data
+            traj_edges = np.array([0, len(data)])
+        else:
+            raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, or numpy array")
+        self.flat_traj = flat_traj
+        self.traj_edges = traj_edges
 
     def compute_generator(self, lag=None):
         """Computes a Galerkin approximation of the generator.
+
+        Parameters
+        ----------
+        lag : int
+            Number of timepoints in the future to use for the finite difference in the discrete-time generator.
 
         Returns
         -------
@@ -34,10 +55,18 @@ class DynamicalDataset(object):
             Matrix giving the Galerkin approximation of the generator.
 
         """
+        if lag is None:
+            lag = self.lag
+
         return
 
     def compute_transop(self, lag=None):
         """Computes a Galerkin approximation of the transfer operator.
+
+        Parameters
+        ----------
+        lag : int
+            Number of timepoints in the future to use for the finite difference in the discrete-time generator.
 
         Returns
         -------
@@ -73,7 +102,7 @@ class DynamicalDataset(object):
             List, where each element is a trajectory of size N_n by d, where N_n is the length of the trajectory and d is the dimensionality of the system.
 
         """
-        return
+        return manip.flat_to_tlist(self.flat_traj, self.traj_edges)
 
     def get_flat_data(self):
         """Returns the trajectory data in the flat format.
@@ -86,4 +115,35 @@ class DynamicalDataset(object):
             Numpy array where each element is the start of each trajectory: the n'th trajectory runs from traj_edges[n] to traj_edges[n+1]
 
         """
-        return
+        return self.flat_traj, self.traj_edges
+
+    def _get_initial_final_split(self, lag=None):
+        """Returns the incides of the points in the flat trajectory of the initial and final sample points.
+        In this context, initial means the first N-lag points, and final means the last N-lag points.
+-
+        Parameters
+        ----------
+        lag : int
+            Number of timepoints in the future to use for the finite difference in the discrete-time generator.
+
+        Returns
+        -------
+        t_0_indices : 1D numpy array
+            Indices in the flattened trajectory data of all the points at the initial times.
+
+        t_0_indices : 1D numpy array
+            Indices in the flattened trajectory data of all the points at the final times.
+
+        """
+        if lag is None:
+            lag = self.lag
+        ntraj = len(self.traj_edges) - 1
+        t_0_indices = []
+        t_lag_indices = []
+        for i in xrange(ntraj):
+            t_start = self.traj_edges[i]
+            t_stop = self.traj_edges[i + 1]
+            if t_stop - t_start > lag:
+                t_0_indices += range(t_start, t_stop - lag)
+                t_lag_indices += range(t_start + lag, t_stop)
+        return np.array(t_0_indices), np.array(t_lag_indices)
