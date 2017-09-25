@@ -140,7 +140,7 @@ class DynamicalDataset(object):
         ntraj = len(self.traj_edges) - 1
         t_0_indices = []
         t_lag_indices = []
-        for i in xrange(ntraj):
+        for i in range(ntraj):
             t_start = self.traj_edges[i]
             t_stop = self.traj_edges[i + 1]
             if t_stop - t_start > lag:

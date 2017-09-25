@@ -3,24 +3,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 
 import numpy as np
-import pytest
+
 
 from pyedgar import data_manipulation as manip
 
 
-@pytest.fixture
-def working_flat_and_tlist():
-    flat = np.zeros((20, 3))
-    flat[:, 0] = np.arange(20) - 5
-    flat[:, 1] = -1 * np.arange(20) + 3
-    flat[:, 2] = np.arange(20) + 1
-    te = [0, 8, 11, 20]
-    tlist = [flat[te[0]:te[1]], flat[te[1]:te[2]], flat[te[2]:te[3]]]
-    return (flat, te, tlist)
-
 # Tests for the tlist to flat function.
-
-
 def test_tlist_to_flat__basic_functionality(working_flat_and_tlist):
     flat, traj_edges, tlist = working_flat_and_tlist
     test_flat, test_traj_edges = manip.tlist_to_flat(tlist)

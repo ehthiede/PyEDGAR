@@ -1,17 +1,44 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""
+Test functions for testing the dynamical dataset object class.
 
+TODO:
+    - Parameterize this code!
+    - Implement tests for returning datastructurs
+    - Implement tests for initial / final split
+"""
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
 
-from test_data_manipulation import working_flat_and_tlist
+
+from pyedgar import DynamicalDataset
 
 
-def test_dataset_creation():
-    flat = np.zeros((20, 3))
-    flat[:, 0] = np.arange(20) - 5
-    flat[:, 1] = -1 * np.arange(20) + 3
-    flat[:, 2] = np.arange(20) + 1
+class TestDatasetCreation(object):
+    def test_from_flat(self, working_flat_and_tlist):
+        flat, traj_edges, tlist = working_flat_and_tlist
+        DS_from_flat = DynamicalDataset((flat, traj_edges))
+        assert(np.all(DS_from_flat.traj_edges == traj_edges))
+        assert(np.all(DS_from_flat.flat_traj == flat))
+        assert(np.all(DS_from_flat.lag == 1))
+        assert(np.all(DS_from_flat.timestep == 1.))
 
+    def test_from_tlist(self, working_flat_and_tlist):
+        flat, traj_edges, tlist = working_flat_and_tlist
+        DS_from_flat = DynamicalDataset(tlist)
+        assert(np.all(DS_from_flat.traj_edges == traj_edges))
+        assert(np.all(DS_from_flat.flat_traj == flat))
+        assert(np.all(DS_from_flat.lag == 1))
+        assert(np.all(DS_from_flat.timestep == 1.))
 
-print(working_flat_and_tlist)
+    def test_from_single_traj(self, working_flat_and_tlist):
+        flat, traj_edges, tlist = working_flat_and_tlist
+        traj = tlist[0]
+        traj_edges = np.array([0, len(traj)])
+        DS_from_flat = DynamicalDataset(traj)
+        assert(np.all(DS_from_flat.traj_edges == traj_edges))
+        assert(np.all(DS_from_flat.flat_traj == traj))
+        assert(np.all(DS_from_flat.lag == 1))
+        assert(np.all(DS_from_flat.timestep == 1.))
