@@ -67,12 +67,12 @@ class DynamicalDataset(object):
         Parameters
         ----------
         lag : int
-            Number of timepoints in the future to use for the finite difference in the discrete-time generator.
+            Number of timepoints in the future to look into the future for the transfer operator.
 
         Returns
         -------
-        L : 2d numpy array
-            Matrix giving the Galerkin approximation of the generator.
+        P : 2d numpy array
+            Matrix giving the Galerkin approximation of the transfer operator.
 
         """
         return
