@@ -15,7 +15,7 @@ import pytest
 
 from pyedgar import DynamicalDataset
 
-lags = range(1, 4)
+lags = list(range(1, 4))
 timesteps = [1., 0.5, 2, 1E4]
 
 
@@ -58,10 +58,11 @@ class TestDatasetCreation(object):
 class TestDatasetSplit(object):
     flat_data = np.ones((20, 2))
     traj_edges = [0, 10, 13, 20]
-    init_indices_lag_2 = np.array(range(0, 8) + [10] + range(13, 18))
-    final_indices_lag_2 = np.array(range(2, 10) + [12] + range(15, 20))
-    init_indices_lag_4 = np.array(range(0, 6) + range(13, 16))
-    final_indices_lag_4 = np.array(range(4, 10) + range(17, 20))
+    init_indices_lag_2 = np.array(list(range(0, 8)) + [10] + list(range(13, 18)))
+    final_indices_lag_2 = np.array(list(range(2, 10)) + [12] 
+                                   + list(range(15, 20)))
+    init_indices_lag_4 = np.array(list(range(0, 6)) + list(range(13, 16)))
+    final_indices_lag_4 = np.array(list(range(4, 10)) + list(range(17, 20)))
 
     def test_use_dataset_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=2)

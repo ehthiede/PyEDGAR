@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 import pytest
 
-lags = [None] + range(1, 4)
+lags = [None] + list(range(1, 4))
 
 
 @pytest.fixture(scope='session')
