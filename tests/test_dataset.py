@@ -59,7 +59,7 @@ class TestDatasetSplit(object):
     flat_data = np.ones((20, 2))
     traj_edges = [0, 10, 13, 20]
     init_indices_lag_2 = np.array(list(range(0, 8)) + [10] + list(range(13, 18)))
-    final_indices_lag_2 = np.array(list(range(2, 10)) + [12] 
+    final_indices_lag_2 = np.array(list(range(2, 10)) + [12]
                                    + list(range(15, 20)))
     init_indices_lag_4 = np.array(list(range(0, 6)) + list(range(13, 16)))
     final_indices_lag_4 = np.array(list(range(4, 10)) + list(range(17, 20)))
