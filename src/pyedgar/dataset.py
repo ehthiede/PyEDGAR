@@ -81,7 +81,15 @@ class DynamicalDataset(object):
             Matrix giving the Galerkin approximation of the transfer operator.
 
         """
-        return
+        if lag is None:
+            lag = self.lag
+
+        t_0_indices, t_lag_indices = self._get_initial_final_split(lag)
+        flat_traj_t_lag = self.flat_traj[t_lag_indices]
+        flat_traj_t_0 = self.flat_traj[t_0_indices]
+        M = len(t_0_indices)
+        P = np.dot(np.transpose(flat_traj_t_0), flat_traj_t_lag) / M
+        return P
 
     def initial_inner_product(self, dynamical_data):
         """Calculates the inner product of a function against the given
