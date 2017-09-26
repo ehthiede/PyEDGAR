@@ -88,7 +88,7 @@ class TestGenerator(object):
     flat_data[5:, 0] = np.arange(5, 11)
     traj_edges = [0, 5, 11]
     generator_at_lag_1 = np.array([[5., 0.], [1., 0.]])
-    generator_at_lag_4 = np.array([[16, 0.], [1., 0.]])
+    generator_at_lag_4 = np.array([[4., 0.], [1., 0.]])
 
     def test_basic_functionality(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges))
@@ -98,12 +98,12 @@ class TestGenerator(object):
     def test_nondefault_input_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges))
         generator_lag_specified = ddata.compute_generator(lag=4)
-        assert(np.all(generator_lag_specified == self.generator_at_lag_1))
+        assert(np.all(generator_lag_specified == self.generator_at_lag_4))
 
     def test_nondefault_dataset_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=4)
         generator_lag_from_dset = ddata.compute_generator()
-        assert(np.all(generator_lag_from_dset == self.generator_at_lag_1))
+        assert(np.all(generator_lag_from_dset == self.generator_at_lag_4))
 
     def test_nondefault_timestep(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges),timestep=2.)
