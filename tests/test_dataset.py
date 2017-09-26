@@ -88,28 +88,28 @@ class TestGenerator(object):
     flat_data[:5, 0] = np.arange(1, 6)
     flat_data[5:, 0] = np.arange(5, 11)
     traj_edges = [0, 5, 11]
-    generator_at_lag_1 = np.array([[5., 0.], [1., 0.]])
-    generator_at_lag_4 = np.array([[4., 0.], [1., 0.]])
+    true_gen_at_lag_1 = np.array([[5., 0.], [1., 0.]])
+    true_gen_at_lag_4 = np.array([[4., 0.], [1., 0.]])
 
     def test_basic_functionality(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges))
         generator = ddata.compute_generator()
-        assert(np.all(generator == self.generator_at_lag_1))
+        assert(np.all(generator == self.true_gen_at_lag_1))
 
     def test_nondefault_input_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges))
         generator_lag_specified = ddata.compute_generator(lag=4)
-        assert(np.all(generator_lag_specified == self.generator_at_lag_4))
+        assert(np.all(generator_lag_specified == self.true_gen_at_lag_4))
 
     def test_nondefault_dataset_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=4)
         generator_lag_from_dset = ddata.compute_generator()
-        assert(np.all(generator_lag_from_dset == self.generator_at_lag_4))
+        assert(np.all(generator_lag_from_dset == self.true_gen_at_lag_4))
 
     def test_nondefault_timestep(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), timestep=2.)
         generator = ddata.compute_generator()
-        assert(np.all(generator == self.generator_at_lag_1/2.))
+        assert(np.all(generator == self.true_gen_at_lag_1/2.))
 
 
 class TestTransferOperator(object):
@@ -117,20 +117,20 @@ class TestTransferOperator(object):
     flat_data[:6, 0] = 2.
     flat_data[6:, 0] = 4.
     traj_edges = [0, 6, 10]
-    transop_at_lag_1 = np.array([[8.5, 2.75], [2.75, 1]])
-    transop_at_lag_3 = np.array([[7., 2.5], [2.5, 1.]])
+    true_t_op_at_lag_1 = np.array([[8.5, 2.75], [2.75, 1]])
+    true_t_op_at_lag_3 = np.array([[7., 2.5], [2.5, 1.]])
 
     def test_basic_functionality(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges))
         transop = ddata.compute_transop()
-        assert(np.all(transop == self.transop_at_lag_1))
+        assert(np.all(transop == self.true_t_op_at_lag_1))
 
     def test_nondefault_input_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges))
         transop_lag_specified = ddata.compute_transop(lag=3)
-        assert(np.all(transop_lag_specified == self.transop_at_lag_3))
+        assert(np.all(transop_lag_specified == self.true_t_op_at_lag_3))
 
     def test_nondefault_dataset_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=3)
         transop_lag_from_dset = ddata.compute_transop()
-        assert(np.all(transop_lag_from_dset == self.transop_at_lag_3))
+        assert(np.all(transop_lag_from_dset == self.true_t_op_at_lag_3))
