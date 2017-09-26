@@ -106,15 +106,16 @@ class TestGenerator(object):
         assert(np.all(generator_lag_from_dset == self.generator_at_lag_4))
 
     def test_nondefault_timestep(self):
-        ddata = DynamicalDataset((self.flat_data, self.traj_edges),timestep=2.)
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges), timestep=2.)
         generator = ddata.compute_generator()
         assert(np.all(generator == self.generator_at_lag_1/2.))
 
+
 class TestTransferOperator(object):
     flat_data = np.ones((10, 2))
-    flat_data[:6,0] = 2.
-    flat_data[6:,0] = 4.
-    traj_edges = [0,6,10]
+    flat_data[:6, 0] = 2.
+    flat_data[6:, 0] = 4.
+    traj_edges = [0, 6, 10]
     transop_at_lag_1 = np.array([[8.5, 2.75], [2.75, 1]])
     transop_at_lag_3 = np.array([[7., 2.5], [2.5, 1.]])
 
