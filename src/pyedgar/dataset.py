@@ -59,7 +59,13 @@ class DynamicalDataset(object):
         if lag is None:
             lag = self.lag
 
-        return
+        t_0_indices, t_lag_indices = self._get_initial_final_split(lag)
+        flat_traj_t_lag = self.flat_traj[t_lag_indices]
+        flat_traj_t_0 = self.flat_traj[t_0_indices]
+        M = len(t_0_indices)
+        du = (flat_traj_t_lag - flat_traj_t_0)/(self.timestep * lag)
+        L = np.dot(np.transpose(flat_traj_t_0), du) / M
+        return L
 
     def compute_transop(self, lag=None):
         """Computes a Galerkin approximation of the transfer operator.
