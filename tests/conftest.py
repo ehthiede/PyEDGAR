@@ -10,7 +10,7 @@ import pytest
 lags = [None] + range(1, 4)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def working_flat_and_tlist():
     flat = np.zeros((20, 3))
     flat[:, 0] = np.arange(20) - 5
