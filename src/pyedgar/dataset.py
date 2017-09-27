@@ -59,7 +59,13 @@ class DynamicalDataset(object):
         if lag is None:
             lag = self.lag
 
-        return
+        t_0_indices, t_lag_indices = self._get_initial_final_split(lag)
+        flat_traj_t_lag = self.flat_traj[t_lag_indices]
+        flat_traj_t_0 = self.flat_traj[t_0_indices]
+        M = len(t_0_indices)
+        du = (flat_traj_t_lag - flat_traj_t_0)/(self.timestep * lag)
+        L = np.dot(np.transpose(flat_traj_t_0), du) / M
+        return L
 
     def compute_transop(self, lag=None):
         """Computes a Galerkin approximation of the transfer operator.
@@ -67,15 +73,23 @@ class DynamicalDataset(object):
         Parameters
         ----------
         lag : int
-            Number of timepoints in the future to use for the finite difference in the discrete-time generator.
+            Number of timepoints in the future to look into the future for the transfer operator.
 
         Returns
         -------
-        L : 2d numpy array
-            Matrix giving the Galerkin approximation of the generator.
+        P : 2d numpy array
+            Matrix giving the Galerkin approximation of the transfer operator.
 
         """
-        return
+        if lag is None:
+            lag = self.lag
+
+        t_0_indices, t_lag_indices = self._get_initial_final_split(lag)
+        flat_traj_t_lag = self.flat_traj[t_lag_indices]
+        flat_traj_t_0 = self.flat_traj[t_0_indices]
+        M = len(t_0_indices)
+        P = np.dot(np.transpose(flat_traj_t_0), flat_traj_t_lag) / M
+        return P
 
     def initial_inner_product(self, dynamical_data):
         """Calculates the inner product of a function against the given
