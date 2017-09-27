@@ -8,7 +8,6 @@ dynamical basis set objects.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
-#from .dataset import DynamicalDataset 
 
 
 def tlist_to_flat(trajs):

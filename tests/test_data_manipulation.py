@@ -9,14 +9,12 @@ from pyedgar import data_manipulation as manip
 def test_tlist_to_flat(working_flat_and_tlist):
     flat, traj_edges, tlist = working_flat_and_tlist
     test_flat, test_traj_edges = manip.tlist_to_flat(tlist)
-    flat_diff = test_flat - flat
-    te_diff = np.array(test_traj_edges) - np.array(traj_edges)
     assert(np.all(test_flat == flat))
     assert(list(test_traj_edges) == traj_edges)
+
 
 def test_flat_to_tlist(working_flat_and_tlist):
     flat, traj_edges, tlist = working_flat_and_tlist
     test_tlist = manip.flat_to_tlist(flat, traj_edges)
     for test_traj, traj in zip(test_tlist, tlist):
         assert(np.all(test_traj == traj))
-

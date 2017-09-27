@@ -136,8 +136,9 @@ class TestTransferOperator(object):
         transop_lag_from_dset = ddata.compute_transop()
         assert(np.all(transop_lag_from_dset == self.true_t_op_at_lag_3))
 
+
 class TestDelayEmbedding():
-    test_data = np.empty((30, 2)) 
+    test_data = np.empty((30, 2))
     test_data[:, 0] = np.arange(30)
     test_data[:, 1] = -np.arange(30)
     traj_edges = [0, 10, 25, 30]
@@ -150,9 +151,9 @@ class TestDelayEmbedding():
     pt_2_embedded = np.concatenate((pt_2[6:], pt_2[3:-3], pt_2[:-6]), axis=1)
 
     def test_delay_embed_on_tlist(self):
-        tlist = [self.pt_1,self.pt_2,self.pt_3]
+        tlist = [self.pt_1, self.pt_2, self.pt_3]
         print(tlist)
-        embedded_tlist = delay_embed(tlist, self.n_embed, lag=self.lag) 
+        embedded_tlist = delay_embed(tlist, self.n_embed, lag=self.lag)
         assert(type(embedded_tlist) is list)
         assert(len(embedded_tlist) == 2)
         assert(np.all(embedded_tlist[0] == self.pt_1_embedded))
@@ -161,10 +162,9 @@ class TestDelayEmbedding():
     def test_delay_embed_on_flat(self):
         true_embed_traj_flat = np.concatenate((self.pt_1_embedded,
                                                self.pt_2_embedded), axis=0)
-        true_embed_traj_edges = [0, 4, 13] 
+        true_embed_traj_edges = [0, 4, 13]
         flat_data = (self.test_data, self.traj_edges)
         embed_traj, embed_edges = delay_embed(flat_data, self.n_embed,
-                                                    lag=self.lag)
+                                              lag=self.lag)
         assert(np.all(embed_traj == true_embed_traj_flat))
         assert(list(embed_edges) == true_embed_traj_edges)
-        

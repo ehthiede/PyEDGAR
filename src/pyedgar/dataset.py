@@ -163,6 +163,7 @@ class DynamicalDataset(object):
                 t_lag_indices += range(t_start + lag, t_stop)
         return np.array(t_0_indices), np.array(t_lag_indices)
 
+
 def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
     """Performs delay embedding on the trajectory data.  Takes in trajectory
     data of format types, and returns the delay embedded data in the same type.
@@ -196,20 +197,20 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
     elif type(traj_data) is np.ndarray:
         input_type = 'single_array'
         tlist = [traj_data]
-    else: 
-            raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, DynamicalDataset, or numpy array")
-    
+    else:
+        raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, DynamicalDataset, or numpy array")
+
     embed_traj_list = []
     for i, traj_i in enumerate(tlist):
         N_i = len(traj_i)
-        if N_i - (lag * n_embed) <= 0: # Must be longer than max embedding
+        if N_i - (lag * n_embed) <= 0:  # Must be longer than max embedding
             continue
         embed_traj_i = []
         for n in range(n_embed+1):
             start_ndx = lag * (n_embed - n)
             stop_ndx = N_i - (lag * n)
             embed_traj_i.append(traj_i[start_ndx:stop_ndx])
-        embed_traj_i = np.concatenate(embed_traj_i,axis=1)
+        embed_traj_i = np.concatenate(embed_traj_i, axis=1)
         embed_traj_list.append(embed_traj_i)
 
     if input_type == 'list_of_trajs':
