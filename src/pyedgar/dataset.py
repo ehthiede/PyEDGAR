@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-from pyedgar import data_manipulation as manip
+from .data_manipulation import tlist_to_flat, flat_to_tlist
 
 
 class DynamicalDataset(object):
@@ -33,7 +33,7 @@ class DynamicalDataset(object):
         if type(data) is tuple:
             flat_traj, traj_edges = data
         elif type(data) is list:
-            flat_traj, traj_edges = manip.tlist_to_flat(data)
+            flat_traj, traj_edges = tlist_to_flat(data)
         elif type(data) is np.ndarray:
             flat_traj = data
             traj_edges = np.array([0, len(data)])
@@ -117,7 +117,7 @@ class DynamicalDataset(object):
             List, where each element is a trajectory of size N_n by d, where N_n is the length of the trajectory and d is the dimensionality of the system.
 
         """
-        return manip.flat_to_tlist(self.flat_traj, self.traj_edges)
+        return flat_to_tlist(self.flat_traj, self.traj_edges)
 
     def get_flat_data(self):
         """Returns the trajectory data in the flat format.
@@ -162,3 +162,63 @@ class DynamicalDataset(object):
                 t_0_indices += range(t_start, t_stop - lag)
                 t_lag_indices += range(t_start + lag, t_stop)
         return np.array(t_0_indices), np.array(t_lag_indices)
+
+def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
+    """Performs delay embedding on the trajectory data.  Takes in trajectory
+    data of format types, and returns the delay embedded data in the same type.
+
+    Parameters
+    ----------
+    traj_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array
+        Dynamical data on which to perform the delay embedding.  This can be of multiple types; if the type is not a dataset object, the type dictates the format of the data.  See documentation for the dynamical dataset object for the types.
+    n_embed : int
+        The number of delay embeddings to perform.
+    lag : int, optional
+        The number of timesteps to look back in time for each delay. Default is 1.
+    verbosity : int
+        The level of status messages that are output. Default is 0 (no messages).
+
+    Returns
+    -------
+    embedded_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array
+        Dynamical data with delay embedding performed, of the same type as the trajectory data.
+
+    """
+    if type(traj_data) is list:
+        input_type = 'list_of_trajs'
+        tlist = traj_data
+    elif type(traj_data) is DynamicalDataset:
+        input_type = 'DynamicalDataset'
+        tlist = traj_data.get_tlist()
+    elif type(traj_data) is tuple:
+        input_type = 'flat'
+        tlist = flat_to_tlist(traj_data[0], traj_data[1])
+    elif type(traj_data) is np.ndarray:
+        input_type = 'single_array'
+        tlist = [traj_data]
+    else: 
+            raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, DynamicalDataset, or numpy array")
+    
+    embed_traj_list = []
+    for i, traj_i in enumerate(tlist):
+        N_i = len(traj_i)
+        if N_i - (lag * n_embed) <= 0: # Must be longer than max embedding
+            continue
+        embed_traj_i = []
+        for n in range(n_embed+1):
+            start_ndx = lag * (n_embed - n)
+            stop_ndx = N_i - (lag * n)
+            embed_traj_i.append(traj_i[start_ndx:stop_ndx])
+        embed_traj_i = np.concatenate(embed_traj_i,axis=1)
+        embed_traj_list.append(embed_traj_i)
+
+    if input_type == 'list_of_trajs':
+        return embed_traj_list
+    elif input_type == 'DynamicalDataset':
+        new_dataset = DynamicalDataset(embed_traj_list, traj_data.lag,
+                                       traj_data.timestep)
+        return new_dataset
+    elif input_type == 'flat':
+        return tlist_to_flat(embed_traj_list)
+    elif input_type == 'single_array':
+        return embed_traj_list[0]
