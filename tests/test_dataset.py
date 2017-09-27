@@ -15,7 +15,7 @@ import pytest
 
 from pyedgar import DynamicalDataset
 
-lags = range(1, 4)
+lags = list(range(1, 4))
 timesteps = [1., 0.5, 2, 1E4]
 
 
@@ -24,39 +24,113 @@ class TestDatasetCreation(object):
     @pytest.mark.parametrize('timestep', timesteps)
     def test_from_flat(self, working_flat_and_tlist, lag, timestep):
         flat, traj_edges, tlist = working_flat_and_tlist
-        ds_from_flat = DynamicalDataset((flat, traj_edges), lag=lag, timestep=timestep)
-        assert(np.all(ds_from_flat.traj_edges == traj_edges))
-        assert(np.all(ds_from_flat.flat_traj == flat))
-        assert(ds_from_flat.lag == lag)
-        assert(ds_from_flat.timestep == timestep)
+        DS_from_flat = DynamicalDataset((flat, traj_edges), lag=lag, timestep=timestep)
+        assert(np.all(DS_from_flat.traj_edges == traj_edges))
+        assert(np.all(DS_from_flat.flat_traj == flat))
+        if lag is None:
+            assert(np.all(DS_from_flat.lag == 1))
+        else:
+            assert(np.all(DS_from_flat.lag == lag))
+        if timestep is None:
+            assert(np.all(DS_from_flat.timestep == 1.))
+        else:
+            assert(np.all(DS_from_flat.timestep == timestep))
 
-    @pytest.mark.parametrize('lag', lags)
-    @pytest.mark.parametrize('timestep', timesteps)
-    def test_from_tlist(self, working_flat_and_tlist, lag, timestep):
+    def test_from_tlist(self, working_flat_and_tlist):
         flat, traj_edges, tlist = working_flat_and_tlist
-        ds_from_flat = DynamicalDataset(tlist, lag=lag, timestep=timestep)
-        assert(np.all(ds_from_flat.traj_edges == traj_edges))
-        assert(np.all(ds_from_flat.flat_traj == flat))
-        assert(np.all(ds_from_flat.lag == lag))
-        assert(np.all(ds_from_flat.timestep == timestep))
+        DS_from_flat = DynamicalDataset(tlist)
+        assert(np.all(DS_from_flat.traj_edges == traj_edges))
+        assert(np.all(DS_from_flat.flat_traj == flat))
+        assert(np.all(DS_from_flat.lag == 1))
+        assert(np.all(DS_from_flat.timestep == 1.))
 
-    @pytest.mark.parametrize('lag', lags)
-    @pytest.mark.parametrize('timestep', timesteps)
-    def test_from_single_traj(self, working_flat_and_tlist, lag, timestep):
+    def test_from_single_traj(self, working_flat_and_tlist):
         flat, traj_edges, tlist = working_flat_and_tlist
         traj = tlist[0]
         traj_edges = np.array([0, len(traj)])
-        ds_from_flat = DynamicalDataset(traj, lag=lag, timestep=timestep)
-        assert(np.all(ds_from_flat.traj_edges == traj_edges))
-        assert(np.all(ds_from_flat.flat_traj == traj))
-        assert(np.all(ds_from_flat.lag == lag))
-        assert(np.all(ds_from_flat.timestep == timestep))
-
-    def test_bad_input(self):
-        with pytest.raises(ValueError) as excinfo:
-            ds_bad = DynamicalDataset('bad_input')
+        DS_from_flat = DynamicalDataset(traj)
+        assert(np.all(DS_from_flat.traj_edges == traj_edges))
+        assert(np.all(DS_from_flat.flat_traj == traj))
+        assert(np.all(DS_from_flat.lag == 1))
+        assert(np.all(DS_from_flat.timestep == 1.))
 
 
+class TestDatasetSplit(object):
+    flat_data = np.ones((20, 2))
+    traj_edges = [0, 10, 13, 20]
+    init_indices_lag_2 = np.array(list(range(0, 8)) + [10] + list(range(13, 18)))
+    final_indices_lag_2 = np.array(list(range(2, 10)) + [12]
+                                   + list(range(15, 20)))
+    init_indices_lag_4 = np.array(list(range(0, 6)) + list(range(13, 16)))
+    final_indices_lag_4 = np.array(list(range(4, 10)) + list(range(17, 20)))
 
-class TestDataReturn():
-    
+    def test_use_dataset_lag(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=2)
+        init_indices, final_indices = ddata._get_initial_final_split()
+        assert(np.all(init_indices == self.init_indices_lag_2))
+        assert(np.all(final_indices == self.final_indices_lag_2))
+
+    def test_use_custom_lag(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=1)
+        init_indices, final_indices = ddata._get_initial_final_split(lag=2)
+        assert(np.all(init_indices == self.init_indices_lag_2))
+        assert(np.all(final_indices == self.final_indices_lag_2))
+
+    def test_lag_longer_than_traj(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=4)
+        init_indices, final_indices = ddata._get_initial_final_split()
+        assert(np.all(init_indices == self.init_indices_lag_4))
+        assert(np.all(final_indices == self.final_indices_lag_4))
+
+
+class TestGenerator(object):
+    flat_data = np.ones((11, 2))
+    flat_data[:5, 0] = np.arange(1, 6)
+    flat_data[5:, 0] = np.arange(5, 11)
+    traj_edges = [0, 5, 11]
+    true_gen_at_lag_1 = np.array([[5., 0.], [1., 0.]])
+    true_gen_at_lag_4 = np.array([[4., 0.], [1., 0.]])
+
+    def test_basic_functionality(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges))
+        generator = ddata.compute_generator()
+        assert(np.all(generator == self.true_gen_at_lag_1))
+
+    def test_nondefault_input_lag(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges))
+        generator_lag_specified = ddata.compute_generator(lag=4)
+        assert(np.all(generator_lag_specified == self.true_gen_at_lag_4))
+
+    def test_nondefault_dataset_lag(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=4)
+        generator_lag_from_dset = ddata.compute_generator()
+        assert(np.all(generator_lag_from_dset == self.true_gen_at_lag_4))
+
+    def test_nondefault_timestep(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges), timestep=2.)
+        generator = ddata.compute_generator()
+        assert(np.all(generator == self.true_gen_at_lag_1/2.))
+
+
+class TestTransferOperator(object):
+    flat_data = np.ones((10, 2))
+    flat_data[:6, 0] = 2.
+    flat_data[6:, 0] = 4.
+    traj_edges = [0, 6, 10]
+    true_t_op_at_lag_1 = np.array([[8.5, 2.75], [2.75, 1]])
+    true_t_op_at_lag_3 = np.array([[7., 2.5], [2.5, 1.]])
+
+    def test_basic_functionality(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges))
+        transop = ddata.compute_transop()
+        assert(np.all(transop == self.true_t_op_at_lag_1))
+
+    def test_nondefault_input_lag(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges))
+        transop_lag_specified = ddata.compute_transop(lag=3)
+        assert(np.all(transop_lag_specified == self.true_t_op_at_lag_3))
+
+    def test_nondefault_dataset_lag(self):
+        ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=3)
+        transop_lag_from_dset = ddata.compute_transop()
+        assert(np.all(transop_lag_from_dset == self.true_t_op_at_lag_3))
