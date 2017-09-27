@@ -67,19 +67,19 @@ class TestDatasetSplit(object):
 
     def test_use_dataset_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=2)
-        init_indices, final_indices = ddata._get_initial_final_split()
+        init_indices, final_indices = ddata.get_initial_final_split()
         assert(np.all(init_indices == self.init_indices_lag_2))
         assert(np.all(final_indices == self.final_indices_lag_2))
 
     def test_use_custom_lag(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=1)
-        init_indices, final_indices = ddata._get_initial_final_split(lag=2)
+        init_indices, final_indices = ddata.get_initial_final_split(lag=2)
         assert(np.all(init_indices == self.init_indices_lag_2))
         assert(np.all(final_indices == self.final_indices_lag_2))
 
     def test_lag_longer_than_traj(self):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=4)
-        init_indices, final_indices = ddata._get_initial_final_split()
+        init_indices, final_indices = ddata.get_initial_final_split()
         assert(np.all(init_indices == self.init_indices_lag_4))
         assert(np.all(final_indices == self.final_indices_lag_4))
 
@@ -135,6 +135,33 @@ class TestTransferOperator(object):
         ddata = DynamicalDataset((self.flat_data, self.traj_edges), lag=3)
         transop_lag_from_dset = ddata.compute_transop()
         assert(np.all(transop_lag_from_dset == self.true_t_op_at_lag_3))
+
+
+class TestInitialInnerProduct(object):
+    traj_edges = [0, 10, 28, 30]
+    test_data_1 = np.ones((30, 2))
+    test_data_1[:, 0] = np.arange(30)
+    test_data_1[10:28, 1] = 0.5
+    test_data_2 = np.ones(30)*2.
+    test_data_2[10:28] = 4.
+    test_data_2[28:] = -100.
+
+    def test_initial_inner_product(self):
+        true_ip = np.array([49., 2.])
+        ddata_1 = DynamicalDataset((self.test_data_1, self.traj_edges), lag=2)
+        ddata_2 = DynamicalDataset((self.test_data_2, self.traj_edges), lag=3)
+        test_ip = ddata_1.initial_inner_product(ddata_2)
+        assert(np.all(true_ip == test_ip))
+        ddata_3 = DynamicalDataset((self.test_data_1, self.traj_edges), lag=1)
+        test_ip = ddata_3.initial_inner_product(ddata_2, lag=2)
+        assert(np.all(true_ip == test_ip))
+
+    def test_mismatched_trajs(self):
+        new_traj_edges = [0, 10, 26, 30]
+        ddata_1 = DynamicalDataset((self.test_data_1, self.traj_edges), lag=2)
+        ddata_2 = DynamicalDataset((self.test_data_2, new_traj_edges), lag=2)
+        with pytest.raises(ValueError):
+            ddata_1.initial_inner_product(ddata_2)
 
 
 class TestDelayEmbedding():

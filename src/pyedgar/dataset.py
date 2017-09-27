@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-from .data_manipulation import tlist_to_flat, flat_to_tlist
+from .data_manipulation import flat_to_tlist, tlist_to_flat
 
 
 class DynamicalDataset(object):
@@ -23,15 +23,21 @@ class DynamicalDataset(object):
         ----------
         traj_data : list of arrays OR tuple of two arrays OR single numpy array
             Dynamical data on which to perform the delay embedding. This dataset can be of multiple types. If a list of arrays is provided, the data is interpreted as a list of trajectories, where each array is a single trajectory. If a tuple is provided, the first element in the tuple is an array containing all of the trajectory information stacked vertically. The first N_1 elements are the datapoints for the first trajectory, the next N_2 the datapoints for the second trajectory, and so on. The second element in the tuple is the edges of the trajectory: an array of [0,N_1,N_2,...]. Finally, if only a single numpy array is provided, the data is taken to come from a single numpy trajectory.
-        lag : int
-            Number of timepoints in the future to use for the finite difference in the discrete-time generator.
+        lag : int, optional
+            Number of timepoints in the future to use for the finite difference in the discrete-time generator.  Default is 1.
+        timestep : scalar, optional
+            The time between successive datapoints in the trajectory.  Default is 1.
 
         """
         self.lag = lag
-        self.timestep = timestep
+        self.timestep = float(timestep)
 
         if type(data) is tuple:
             flat_traj, traj_edges = data
+            flat_traj = np.array(flat_traj)
+            traj_edges = list(traj_edges)
+            if len(flat_traj) != traj_edges[-1]:
+                raise ValueError("Final edge of the trajectory is not equal to the length of the data!")
         elif type(data) is list:
             flat_traj, traj_edges = tlist_to_flat(data)
         elif type(data) is np.ndarray:
@@ -47,7 +53,7 @@ class DynamicalDataset(object):
 
         Parameters
         ----------
-        lag : int
+        lag : int, optional
             Number of timepoints in the future to use for the finite difference in the discrete-time generator.
 
         Returns
@@ -59,7 +65,7 @@ class DynamicalDataset(object):
         if lag is None:
             lag = self.lag
 
-        t_0_indices, t_lag_indices = self._get_initial_final_split(lag)
+        t_0_indices, t_lag_indices = self.get_initial_final_split(lag)
         flat_traj_t_lag = self.flat_traj[t_lag_indices]
         flat_traj_t_0 = self.flat_traj[t_0_indices]
         M = len(t_0_indices)
@@ -72,7 +78,7 @@ class DynamicalDataset(object):
 
         Parameters
         ----------
-        lag : int
+        lag : int, optional
             Number of timepoints in the future to look into the future for the transfer operator.
 
         Returns
@@ -84,21 +90,23 @@ class DynamicalDataset(object):
         if lag is None:
             lag = self.lag
 
-        t_0_indices, t_lag_indices = self._get_initial_final_split(lag)
+        t_0_indices, t_lag_indices = self.get_initial_final_split(lag)
         flat_traj_t_lag = self.flat_traj[t_lag_indices]
         flat_traj_t_0 = self.flat_traj[t_0_indices]
         M = len(t_0_indices)
         P = np.dot(np.transpose(flat_traj_t_0), flat_traj_t_lag) / M
         return P
 
-    def initial_inner_product(self, dynamical_data):
+    def initial_inner_product(self, dynamical_data, lag=None):
         """Calculates the inner product of a function against the given
         dynamical dataset.
 
         Parameters
         ----------
         dynamical_data : dynamical dataset object
-            Other dynamical dataset object with which to perform the dot product.
+            Other dynamical dataset object with which to perform the dot product.  If None, uses the lag from this object (not the one we're taking the dot product against).
+        lag : int, optional
+            Number of timepoints in the future to look into the future for the transfer operator.
 
         Returns
         -------
@@ -106,7 +114,17 @@ class DynamicalDataset(object):
             Output of the estimate of the product of the two datasets against the initial density.
 
         """
-        return
+        if (list(dynamical_data.traj_edges) != list(self.traj_edges)):
+            raise ValueError("Trajectories are not the same length in the two datasets")
+
+        if lag is None:
+            lag = self.lag
+
+        initial_indices = self.get_initial_final_split(lag=lag)[0]
+        M = len(initial_indices)
+        my_initial_traj = self.flat_traj[initial_indices]
+        other_initial_traj = dynamical_data.flat_traj[initial_indices]
+        return np.dot(my_initial_traj.T, other_initial_traj) / M
 
     def get_tlist(self):
         """Returns the trajectory data in the trajectory list format.
@@ -132,14 +150,14 @@ class DynamicalDataset(object):
         """
         return self.flat_traj, self.traj_edges
 
-    def _get_initial_final_split(self, lag=None):
+    def get_initial_final_split(self, lag=None):
         """Returns the incides of the points in the flat trajectory of the initial and final sample points.
         In this context, initial means the first N-lag points, and final means the last N-lag points.
 -
         Parameters
         ----------
-        lag : int
-            Number of timepoints in the future to use for the finite difference in the discrete-time generator.
+        lag : int, optional
+            Number of timepoints in the future to look into the future for the transfer operator.  Default is the value provided when constructing the dynamical dataset object.
 
         Returns
         -------
@@ -176,7 +194,7 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
         The number of delay embeddings to perform.
     lag : int, optional
         The number of timesteps to look back in time for each delay. Default is 1.
-    verbosity : int
+    verbosity : int, optional
         The level of status messages that are output. Default is 0 (no messages).
 
     Returns
