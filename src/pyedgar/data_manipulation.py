@@ -28,7 +28,13 @@ def tlist_to_flat(trajs):
         Numpy array where each element is the start of each trajectory: the n'th trajectory runs from traj_edges[n] to traj_edges[n+1]
 
     """
-    # Get dimensions of 2D traj object
+    # Check all trajectories are same order tensors.
+    traj_orders = np.array([len(np.shape(ti)) for ti in trajs])
+    if np.any(traj_orders != traj_orders[0]):
+        raise ValueError("Input Trajectories have varying dimension")
+    if traj_orders[0] == 1:
+        trajs = [t_i.reshape(-1, 1) for t_i in trajs]
+    # Get dimensions of traj object.
     d = len(trajs[0][0])
     # Populate the large trajectory.
     traj_2d = []

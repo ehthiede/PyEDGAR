@@ -4,6 +4,8 @@ with dynamical data.
 
 @author: Erik
 
+TODO: Expand inner product to allow alternate forms of input.
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -176,7 +178,7 @@ class DynamicalDataset(object):
         for i in range(ntraj):
             t_start = self.traj_edges[i]
             t_stop = self.traj_edges[i + 1]
-            if t_stop - t_start > lag:
+            if (t_stop - t_start) > lag:
                 t_0_indices += range(t_start, t_stop - lag)
                 t_lag_indices += range(t_start + lag, t_stop)
         return np.array(t_0_indices), np.array(t_lag_indices)

@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Test functions for testing the dynamical dataset object class.
-
-TODO:
-    - Parameterize this code?
-    - Implement tests for returning datastructurs
-    - Implement tests for initial / final split
-"""
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
