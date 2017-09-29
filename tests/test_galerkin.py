@@ -14,7 +14,7 @@ def make_random_walk():
     N = 21
     xg = np.linspace(-1, 1, N)
     traj_list = []
-    for i in xrange(N):
+    for i in range(N):
         x = xg[i]
         x_bwd = xg[np.maximum((i-1), 0)]
         x_fwd = xg[np.minimum((i+1), N-1)]
