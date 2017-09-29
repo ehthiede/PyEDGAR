@@ -17,8 +17,9 @@ class TestDatasetCreation(object):
     def test_from_flat(self, working_flat_and_tlist, lag, timestep):
         flat, traj_edges, tlist = working_flat_and_tlist
         DS_from_flat = DynamicalDataset((flat, traj_edges), lag=lag, timestep=timestep)
-        assert(np.all(DS_from_flat.traj_edges == traj_edges))
-        assert(np.all(DS_from_flat.flat_traj == flat))
+        new_flat_traj, new_traj_edges = DS_from_flat.get_flat_data()
+        assert(np.all(new_traj_edges == traj_edges))
+        assert(np.all(new_flat_traj == flat))
         if lag is None:
             assert(np.all(DS_from_flat.lag == 1))
         else:
@@ -30,21 +31,23 @@ class TestDatasetCreation(object):
 
     def test_from_tlist(self, working_flat_and_tlist):
         flat, traj_edges, tlist = working_flat_and_tlist
-        DS_from_flat = DynamicalDataset(tlist)
-        assert(np.all(DS_from_flat.traj_edges == traj_edges))
-        assert(np.all(DS_from_flat.flat_traj == flat))
-        assert(np.all(DS_from_flat.lag == 1))
-        assert(np.all(DS_from_flat.timestep == 1.))
+        DS_from_tlist = DynamicalDataset(tlist)
+        new_flat_traj, new_traj_edges = DS_from_tlist.get_flat_data()
+        assert(np.all(new_traj_edges == traj_edges))
+        assert(np.all(new_flat_traj == flat))
+        assert(np.all(DS_from_tlist.lag == 1))
+        assert(np.all(DS_from_tlist.timestep == 1.))
 
     def test_from_single_traj(self, working_flat_and_tlist):
         flat, traj_edges, tlist = working_flat_and_tlist
         traj = tlist[0]
         traj_edges = np.array([0, len(traj)])
-        DS_from_flat = DynamicalDataset(traj)
-        assert(np.all(DS_from_flat.traj_edges == traj_edges))
-        assert(np.all(DS_from_flat.flat_traj == traj))
-        assert(np.all(DS_from_flat.lag == 1))
-        assert(np.all(DS_from_flat.timestep == 1.))
+        DS_from_single = DynamicalDataset(traj)
+        new_flat_traj, new_traj_edges = DS_from_single.get_flat_data()
+        assert(np.all(new_traj_edges == traj_edges))
+        assert(np.all(new_flat_traj == traj))
+        assert(np.all(DS_from_single.lag == 1))
+        assert(np.all(DS_from_single.timestep == 1.))
 
 
 class TestDatasetSplit(object):

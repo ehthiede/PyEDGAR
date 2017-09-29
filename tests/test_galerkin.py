@@ -36,7 +36,7 @@ def test_mfpt(make_random_walk):
     stateA = (flat_traj < -.5) * (flat_traj > 0.5)
     stateA_dset = DynamicalDataset((stateA, traj_edges))
     basis_dset = DynamicalDataset((basis, traj_edges))
-    mfpt = galerkin.compute_mfpt(basis_dset, stateA_dset).flat_traj
+    mfpt = galerkin.compute_mfpt(basis_dset, stateA_dset).get_flat_data()[0]
     for i in range(nbasis):
         basis_vector = basis[:, i]
         mfpt_true = 2*(i+1)*(11-i)
@@ -56,7 +56,7 @@ def test_committor(make_random_walk):
     stateA_dset = DynamicalDataset((stateA, traj_edges))
     stateB_dset = DynamicalDataset((stateB, traj_edges))
     basis_dset = DynamicalDataset((basis, traj_edges))
-    committor = galerkin.compute_committor(basis_dset, stateA_dset, stateB_dset).flat_traj
+    committor = galerkin.compute_committor(basis_dset, stateA_dset, stateB_dset).get_flat_data()[0]
     for i in range(nbasis):
         basis_vector = basis[:, i]
         committor_true = (i+1)*.25/3.
@@ -65,10 +65,12 @@ def test_committor(make_random_walk):
         assert(np.all(error < error_tol))
 
 
-def test_stationary_distrib(make_random_walk):
+def test_change_of_measure(make_random_walk):
     error_tol = 1E-10
     basis, flat_traj, traj_edges = make_random_walk
     basis_dset = DynamicalDataset((basis, traj_edges))
-    stationary_distrib = galerkin.compute_stationary_distrib(basis_dset)
-    error = (stationary_distrib.flat_traj).flatten() - 1./21
+    change_of_measure = galerkin.compute_change_of_measure(basis_dset)
+    change_of_measure = (change_of_measure.get_flat_data()[0]).flatten()
+    change_of_measure /= np.sum(change_of_measure)
+    error = change_of_measure - 1/21
     assert(np.all(error < error_tol))

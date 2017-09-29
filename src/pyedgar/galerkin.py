@@ -38,13 +38,14 @@ def compute_mfpt(basis, state_A, lag=None, timestep=1.):
     """
     # REWRITE ONCE YOU EXPAND INITIAL IP FUNCTION
     L = basis.compute_generator(lag=lag)
-    traj_edges = basis.traj_edges
-    complement_A = (state_A.flat_traj.astype('int')-1)
-    comp_A_dset = DynamicalDataset((complement_A, traj_edges))
+    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
+    state_A_flat_traj = state_A.get_flat_data()[0]
+    complement_A = (state_A_flat_traj.astype('int')-1)
+    comp_A_dset = DynamicalDataset((complement_A, basis_traj_edges))
     beta = basis.initial_inner_product(comp_A_dset)
     coeffs = spl.solve(L, beta)
-    new_vals = np.dot(basis.flat_traj, coeffs)
-    return DynamicalDataset((new_vals, traj_edges), lag=basis.lag, timestep=basis.timestep)
+    new_vals = np.dot(basis_flat_traj, coeffs)
+    return DynamicalDataset((new_vals, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
 
 
 def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
@@ -76,21 +77,24 @@ def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
     if test_fxn is None:
         test_fxn = stateB
     L = basis.compute_generator(lag=lag)
+    # Calculate approximate action of generator on test fxn
     initial_points = basis.get_initial_final_split(lag)[0]
-    test_fxn_data = test_fxn.flat_traj.flatten()
+    test_fxn_data = test_fxn.get_flat_data()[0].flatten()
     test_fxn_diff_part = (test_fxn_data[lag:]-test_fxn_data[:-lag])/basis.timestep
     test_fxn_diff = np.zeros(test_fxn_data.shape)
     test_fxn_diff[:-lag] = test_fxn_diff_part
     test_fxn_diff = test_fxn_diff[initial_points]
-    basis_initial_points = basis.flat_traj[initial_points]
-    Lb = -np.dot(basis_initial_points.T, test_fxn_diff)/len(initial_points)
-    coeffs = spl.solve(L, Lb)
-    new_vals = np.dot(basis.flat_traj, coeffs)
-    return DynamicalDataset((new_vals, basis.traj_edges), lag=basis.lag, timestep=basis.timestep)
+    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
+    basis_initial_points = basis_flat_traj[initial_points]
+    L_test = np.dot(basis_initial_points.T, test_fxn_diff)/len(initial_points)
+    # Solve for comittor
+    coeffs = spl.solve(L, -L_test)
+    new_vals = np.dot(basis_flat_traj, coeffs)
+    return DynamicalDataset((new_vals, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
 
 
-def compute_stationary_distrib(basis, lag=1):
-    """Calculates the value of the stationary distribution for each datapoint.
+def compute_change_of_measure(basis, lag=1, fix=1):
+    """Calculates the value of the change of measure to the stationary distribution for each datapoint.
 
     Parameters
     ----------
@@ -99,14 +103,29 @@ def compute_stationary_distrib(basis, lag=1):
         This method works much better if the basis set is zero on states A and B, however this is not a necessity.
     lag : int, optional
         Number of timepoints in the future to use for the finite difference in the discrete-time generator.
+    fix : int, optional
+        Basis set whose coefficient to hold at a fixed value.
 
     Returns
     -------
-    stationary_distribution : dynamical basis object
-        Dynamical dataset object containing the values of the stationary distribution at each point.
+    change_of_measure : dynamical basis object
+        Dynamical dataset object containing the values of the change of measure to the stationary distribution at each point.
 
     """
-    return
+    if lag is None:
+        lag = basis.lag
+    L = basis.compute_generator(lag=lag)
+    not_fixed = list(range(0, fix))+list(range(fix+1, len(L)))
+    b = -L[fix, not_fixed]
+    L_submat_transpose = (L[not_fixed, :][:, not_fixed]).T
+    pi_notfixed = spl.solve(L_submat_transpose, b)  # coeffs of not fixed states
+    pi = np.ones(len(L))
+    pi[not_fixed] = pi_notfixed  # All coefficients
+    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
+    pi_realspace = np.dot(basis_flat_traj, pi)  # Convert back to realspace.
+    # As positivity is not guaranteed, try to ensure most values are positive
+    pi_realspace *= np.sign(np.median(pi_realspace))
+    return DynamicalDataset((pi_realspace, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
 
 
 def compute_esystem(basis, lag=1, left=False, right=True):
