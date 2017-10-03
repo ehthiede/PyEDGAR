@@ -74,3 +74,62 @@ def test_change_of_measure(make_random_walk):
     change_of_measure /= np.sum(change_of_measure)
     error = change_of_measure - 1/21
     assert(np.all(error < error_tol))
+
+class TestEsystem(object):
+    eval_error_tol = 1E-5
+    evec_error_tol = .1
+    precomputed_evals = np.array([0,-5.5836E-3,-2.2214E-2,-4.9516E-2,-8.6881E-2])
+    xax = np.linspace(-1.,1.,21)
+    true_evecs = np.array([np.ones(xax.shape),
+                           -np.sin(.5*np.pi*xax),
+                           -np.cos(np.pi*xax),
+                           np.sin(1.5*np.pi*xax),
+                           np.cos(2.*np.pi*xax) ]).T
+    true_evecs /= np.linalg.norm(true_evecs,axis=0)
+
+
+    @pytest.mark.parametrize('left', [True, False])
+    @pytest.mark.parametrize('right', [True, False])
+    def test_top_evecs_are_correct(self,make_random_walk,left,right):
+        # Setup
+        basis, flat_traj, traj_edges = make_random_walk
+        basis_dset = DynamicalDataset((basis, traj_edges))
+        # Evaluate eigensystem
+        if (left and right):
+            evals, left_evecs, right_evecs = galerkin.compute_esystem(basis_dset,left=True, right=True)
+        elif left:
+            evals, left_evecs = galerkin.compute_esystem(basis_dset,left=True, right=False)
+        elif right:
+            evals, right_evecs = galerkin.compute_esystem(basis_dset,left=False, right=True)
+        else:
+            return
+        for i in range(5):
+            if left:
+                left_evec_i = left_evecs[:,i]
+                left_evec_i *= np.sign(left_evec_i[0])/np.linalg.norm(left_evec_i)
+                left_evec_i_diff = left_evec_i - self.true_evecs[:,i]
+                left_evec_i_error = np.linalg.norm(left_evec_i_diff)
+                left_evec_i_error /= len(left_evec_i_diff)
+                assert(left_evec_i_error < self.evec_error_tol)
+            if right:
+                right_evec_i = right_evecs[:,i]
+                right_evec_i *= np.sign(right_evec_i[0])
+                right_evec_i_diff = right_evec_i - self.true_evecs[:,i]
+                right_evec_i_error = np.linalg.norm(right_evec_i_diff)
+                right_evec_i_error /= len(right_evec_i_diff)
+                assert(right_evec_i_error < self.evec_error_tol)
+
+    @pytest.mark.parametrize('left', [True, False])
+    @pytest.mark.parametrize('right', [True, False])
+    def test_top_evals_are_correct(self,make_random_walk,left,right):
+        # Setup
+        basis, flat_traj, traj_edges = make_random_walk
+        basis_dset = DynamicalDataset((basis, traj_edges))
+        # Evaluate eigensystem
+        if (left or right):
+            evals = galerkin.compute_esystem(basis_dset, left=left, right=right)[0]
+            print(evals,left,right)
+        else:
+            evals = galerkin.compute_esystem(basis_dset, left=False, right=False)
+        evals_error = np.linalg.norm(evals[:5] - self.precomputed_evals)
+        assert(evals_error < self.eval_error_tol)

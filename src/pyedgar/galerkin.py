@@ -154,4 +154,49 @@ def compute_esystem(basis, lag=1, left=False, right=True):
         If right was set to true, the right eigenvectors are returned as a dynamical dataset object.
 
     """
-    return
+    if lag is None:
+        lag = basis.lag
+    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
+    L = basis.compute_generator(lag=lag)
+    S = basis.initial_inner_product(basis,lag=lag)
+    # Calculate, sort eigensystem
+    if (left and right):
+        evals, evecs_l, evecs_r = spl.eig(L,b=S,left=True,right=True)
+        evals, [evecs_l, evecs_r] = _sort_esystem(evals, [evecs_l, evecs_r])
+        expanded_evecs_l = np.dot(basis_flat_traj,evecs_l)
+        expanded_evecs_r = np.dot(basis_flat_traj,evecs_r)
+        return evals, evecs_l, evecs_r
+    elif (left or right):
+        evals, evecs = spl.eig(L,b=S,left=left,right=right)
+        evals, [evecs] = _sort_esystem(evals, [evecs])
+        expanded_evecs = np.dot(basis_flat_traj,evecs)
+        return evals, evecs
+    else:
+        evals = spl.eig(L,b=S,left=False,right=False)
+        return np.sort(evals)[::-1]
+
+def _sort_esystem(evals, evec_collection):
+    """Utility function that sorts a collection of eigenvetors in desceding
+    order, and then sorts the eigenvectors accordingly.
+
+    Parameters
+    ----------
+    evals : numpy array
+        The unsorted eigenvalues.
+    evec_collection : list of arrays
+        List where each element in the list is a collection of eigenvectors.
+        Each collection is sorted according to the eigenvalues.
+
+    Returns
+    -------
+    sorted_evals : numpy array
+        The sorted eigenvalues
+    sorted_evecs : of arrays
+        list where each element is a collection of sorted eigenvectors.
+
+    """
+    idx = evals.argsort()[::-1]
+    sorted_evals = evals[idx]
+    sorted_evecs = [evecs[:,idx] for evecs in evec_collection]
+    return sorted_evals, sorted_evecs
+
