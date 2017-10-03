@@ -158,22 +158,23 @@ def compute_esystem(basis, lag=1, left=False, right=True):
         lag = basis.lag
     basis_flat_traj, basis_traj_edges = basis.get_flat_data()
     L = basis.compute_generator(lag=lag)
-    S = basis.initial_inner_product(basis,lag=lag)
+    S = basis.initial_inner_product(basis, lag=lag)
     # Calculate, sort eigensystem
     if (left and right):
-        evals, evecs_l, evecs_r = spl.eig(L,b=S,left=True,right=True)
+        evals, evecs_l, evecs_r = spl.eig(L, b=S, left=True, right=True)
         evals, [evecs_l, evecs_r] = _sort_esystem(evals, [evecs_l, evecs_r])
-        expanded_evecs_l = np.dot(basis_flat_traj,evecs_l)
-        expanded_evecs_r = np.dot(basis_flat_traj,evecs_r)
-        return evals, evecs_l, evecs_r
+        expanded_evecs_l = np.dot(basis_flat_traj, evecs_l)
+        expanded_evecs_r = np.dot(basis_flat_traj, evecs_r)
+        return evals, expanded_evecs_l, expanded_evecs_r
     elif (left or right):
-        evals, evecs = spl.eig(L,b=S,left=left,right=right)
+        evals, evecs = spl.eig(L, b=S, left=left, right=right)
         evals, [evecs] = _sort_esystem(evals, [evecs])
-        expanded_evecs = np.dot(basis_flat_traj,evecs)
-        return evals, evecs
+        expanded_evecs = np.dot(basis_flat_traj, evecs)
+        return evals, expanded_evecs
     else:
-        evals = spl.eig(L,b=S,left=False,right=False)
+        evals = spl.eig(L, b=S, left=False, right=False)
         return np.sort(evals)[::-1]
+
 
 def _sort_esystem(evals, evec_collection):
     """Utility function that sorts a collection of eigenvetors in desceding
@@ -197,6 +198,5 @@ def _sort_esystem(evals, evec_collection):
     """
     idx = evals.argsort()[::-1]
     sorted_evals = evals[idx]
-    sorted_evecs = [evecs[:,idx] for evecs in evec_collection]
+    sorted_evecs = [evecs[:, idx] for evecs in evec_collection]
     return sorted_evals, sorted_evecs
-
