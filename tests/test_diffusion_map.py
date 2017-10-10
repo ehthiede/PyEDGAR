@@ -2,16 +2,16 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
-import pytest
 
 import pyedgar.diffusion_map as dmap
+
 
 class TestBasisFormation(object):
     evec_error_tol = .1
 
     def test_full_basis_flat(self):
         # Define parameters
-        xax = np.linspace(-1,1,201)
+        xax = np.linspace(-1, 1, 201)
         # Define the true eigenvectors of the random walk.
         true_evecs = np.array([np.ones(xax.shape),
                                -np.sin(.5*np.pi*xax),
@@ -26,11 +26,7 @@ class TestBasisFormation(object):
         basis = diff_atlas.make_dirichlet_basis(k=n_evecs)[0]
         basis /= np.linalg.norm(basis, axis=0) * np.sign(basis[0])
         for i in range(n_evecs):
-            basis_i = basis[:,i]
-            true_evec_i = true_evecs[:,i]
+            basis_i = basis[:, i]
+            true_evec_i = true_evecs[:, i]
             diff = basis_i - true_evec_i
             assert(np.linalg.norm(diff) < self.evec_error_tol)
-            
-
-
-    
