@@ -104,7 +104,7 @@ class TestEsystem(object):
             evals, right_evecs = galerkin.compute_esystem(basis_dset, left=False, right=True)
         else:
             return
-        # Handle evecs 0,2,4 (cosines)
+        # Check right, left eigenvectors.
         for i in range(5):
             if left:
                 left_evec_i = left_evecs[:, i]
