@@ -245,23 +245,6 @@ class DiffusionAtlas(object):
         evecs = evecs[:, idx]
         return evecs, evals
 
-    def extend_oos(self, coords, function_values):
-        """Performs out-of-sample extension for given values of a function.
-
-        Parameters
-        ----------
-        coords : 1 or 2d array
-            The new coordinates upon which to perform the out-of-sample extension.
-        function_values : 1d array
-            The value of the function at each point in the diffusion map.
-
-        Returns
-        -------
-        new_values : 1d array
-            The estimated value of the function at the new points.
-
-        """
-        return
 
 
 def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-40, 41), verbosity=0, metric='euclidean', metric_params=None):
