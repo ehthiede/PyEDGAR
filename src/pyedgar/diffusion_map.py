@@ -246,7 +246,6 @@ class DiffusionAtlas(object):
         return evecs, evals
 
 
-
 def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-40, 41), verbosity=0, metric='euclidean', metric_params=None):
     """Code implementing Kernel Density estimatation.  Algorithm is heavily based on that presented in Berry, Giannakis, and Harlim, Phys. Rev. E. 91, 032915 (2015).
 
