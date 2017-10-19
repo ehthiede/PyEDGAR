@@ -7,6 +7,6 @@ def test_pyedgar():
     import pyedgar
     assert pyedgar
     assert pyedgar.data_manipulation
-    assert pyedgar.diffusion_map
+    assert pyedgar.basis
     assert pyedgar.galerkin
     assert pyedgar.DynamicalDataset

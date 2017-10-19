@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-import pyedgar.diffusion_map as dmap
+import pyedgar.basis
 
 
 class TestBasisFormation(object):
@@ -21,7 +21,7 @@ class TestBasisFormation(object):
         true_evecs /= np.linalg.norm(true_evecs, axis=0)
         n_evecs = len(true_evecs[0])
         # Construct the diffusion map atlas.
-        diff_atlas = dmap.DiffusionAtlas()
+        diff_atlas = pyedgar.basis.DiffusionAtlas()
         diff_atlas.fit(xax)
         basis = diff_atlas.make_dirichlet_basis(k=n_evecs)[0]
         basis /= np.linalg.norm(basis, axis=0) * np.sign(basis[0])
