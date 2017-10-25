@@ -54,7 +54,7 @@ def tlist_to_flat(trajs):
         len_traj_2d += traj.shape[0]
         traj_edges.append(len_traj_2d)
 
-    traj_2d = np.hstack(traj_2d)
+    traj_2d = np.vstack(traj_2d)
     return traj_2d, np.array(traj_edges)
 
 
