@@ -20,8 +20,8 @@ class DiffusionAtlas(object):
     bases with various boundary conditions."""
 
     def __init__(self, nneighbors=600, d=None,
-                 alpha='0', beta='-1/(d+2)', epses=2.**np.arange(-40, 41),
-                 rho_norm=True, metric='euclidean', metric_params=None, verbosity=0):
+                 alpha='0', beta='-1/d', epses=2.**np.arange(-40, 41),
+                 rho_norm=False, metric='euclidean', metric_params=None, verbosity=0):
         """Constructs the factory object.  The factory object can then be
         called to make diffusion map bases of various boundary conditions.
 
