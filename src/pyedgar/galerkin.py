@@ -89,6 +89,7 @@ def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
     L_test = np.dot(basis_initial_points.T, test_fxn_diff)/len(initial_points)
     # Solve for comittor
     coeffs = spl.solve(L, -L_test)
+    # coeffs = scipy.optimize.minimize(-L_test, lambda x: np.dot(L, x))
     new_vals = np.dot(basis_flat_traj, coeffs)
     return DynamicalDataset((new_vals, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
 

@@ -29,28 +29,33 @@ def tlist_to_flat(trajs):
 
     """
     # Check all trajectories are same order tensors.
-    traj_orders = np.array([len(np.shape(ti)) for ti in trajs])
+    traj_orders = np.array([ti.ndim for ti in trajs])
     if np.any(traj_orders != traj_orders[0]):
         raise ValueError("Input Trajectories have varying dimension")
+
     if traj_orders[0] == 1:
         trajs = [t_i.reshape(-1, 1) for t_i in trajs]
+
     # Get dimensions of traj object.
     d = len(trajs[0][0])
+
     # Populate the large trajectory.
     traj_2d = []
     traj_edges = [0]
     len_traj_2d = 0
     for i, traj in enumerate(trajs):
         # Check that trajectory is of right format.
-        if len(np.shape(traj)) != 2:
+        if traj.ndim != 2:
             raise ValueError('Trajectory %d is not two dimensional!' % i)
-        d2 = np.shape(traj)[1]
+        d2 = traj.shape[1]
         if d2 != d:
             raise ValueError('Trajectories are of incompatible dimension.  The first trajectory has dimension %d and trajectory %d has dimension %d' % (d, i, d2))
-        traj_2d += list(traj)
-        len_traj_2d += len(traj)
+        traj_2d.append(traj)
+        len_traj_2d += traj.shape[0]
         traj_edges.append(len_traj_2d)
-    return np.array(traj_2d), np.array(traj_edges)
+
+    traj_2d = np.vstack(traj_2d)
+    return traj_2d, np.array(traj_edges)
 
 
 def flat_to_tlist(traj_2d, traj_edges):

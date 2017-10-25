@@ -205,7 +205,8 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
         Dynamical data with delay embedding performed, of the same type as the trajectory data.
 
     """
-    if type(traj_data) is list:
+    # if type(traj_data) is list:
+    if isinstance(traj_data, (list, )):
         input_type = 'list_of_trajs'
         tlist = traj_data
     elif type(traj_data) is DynamicalDataset:

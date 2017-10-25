@@ -20,7 +20,7 @@ class DiffusionAtlas(object):
     bases with various boundary conditions."""
 
     def __init__(self, nneighbors=600, d=None,
-                 alpha='0', beta='-1/d', epses=2.**np.arange(-40, 41),
+                 alpha='0', beta='-1/d', epses=None,
                  rho_norm=False, metric='euclidean', metric_params=None, verbosity=0):
         """Constructs the factory object.  The factory object can then be
         called to make diffusion map bases of various boundary conditions.
@@ -52,6 +52,10 @@ class DiffusionAtlas(object):
             Whether to print verbose output.  If 0 (default), no updates are printed.  If 1, prints results of automated bandwidth and dimensionality routines.  If 2, prints program status updates.
 
         """
+
+        if epses is None:
+            epses = 2.0**np.arange(-40, 41)
+
         self.nneighbors = nneighbors
         self.d = d
         self.alpha = alpha
@@ -101,6 +105,7 @@ class DiffusionAtlas(object):
 
         # Evaluate scaled distances
         nn_indices, nn_distsq = get_nns(data, self.nneighbors)
+        # nn_distsq /= rho * rho[nn_indices]
         for i, row in enumerate(nn_distsq):
             row /= rho[i]*rho[nn_indices[i]]
 
@@ -159,19 +164,19 @@ class DiffusionAtlas(object):
             K = K * diag_wt
 
         # Normalize to Transition Rate Matrix
-        q_alpha = np.array(K.sum(axis=1)).flatten()
+        q_alpha = K.sum(axis=1).ravel()
         diagq_alpha = sps.dia_matrix((1./(q_alpha), [0]), shape=(N, N))
         L = diagq_alpha * K  # Normalize row sum to one.
-        diag = L.diagonal()-1.
+        diag = L.diagonal() - 1.
         L.setdiag(diag)  # subtract identity.
         if self.verbosity >= 2:
             print(r"Applied q**\alpha normalization.")
 
         # Normalize matrix by epsilon, and (if specified) by bandwidth fxn.
         if self.rho_norm:
-            diag_norm = sps.dia_matrix((1./(rho**2*epsilon), 0), shape=(N, N))
+            diag_norm = sps.dia_matrix((1. / (rho**2 * epsilon), 0), shape=(N, N))
         else:
-            diag_norm = sps.eye(N)*(1./epsilon)
+            diag_norm = sps.eye(N) * (1. / epsilon)
             pi = q_alpha
         L = diag_norm * L
         if self.verbosity >= 2:
@@ -237,8 +242,11 @@ class DiffusionAtlas(object):
         submat = self.L
         if outside_domain is not None:
             domain = 1 - outside_domain
-            submat = submat[domain][:, domain]
+            # submat = submat[domain][:, domain]
+            submat = submat[domain[:, None], domain]
+
         evals, evecs = spsl.eigs(submat, k, which='LR')
+
         # Sort by eigenvalue.
         idx = evals.argsort()[::-1]
         evals = evals[idx]
@@ -321,7 +329,7 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
         if d is None:
             raise ValueError('Dimensionality needed to normalize the density estimate , but no dimensionality information found or estimated.')
     q0 /= (rho**d)
-    q0 *= (2.*np.pi)**(-d/2.) / len(q0)
+    q0 *= (2.*np.pi)**(-d/2.) / q0.shape
     return q0, d, eps_opt
 
 
