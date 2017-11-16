@@ -236,6 +236,7 @@ class DiffusionAtlas(object):
         """
         submat = self.L
         npoints = self.L.shape[0]
+        # Take submatrix if necessary
         if in_domain is not None:
             domain = np.where(in_domain > 0)[0]
             submat = submat[domain][:, domain]
@@ -244,8 +245,12 @@ class DiffusionAtlas(object):
         idx = evals.argsort()[::-1]
         evals = evals[idx]
         evecs = evecs[:, idx]
-        full_evecs = np.zeros((npoints,k))
-        full_evecs[domain,:] = evecs
+        # If using a submatrix, expand back to full size
+        if in_domain is not None:
+            full_evecs = np.zeros((npoints, k))
+            full_evecs[domain, :] = evecs
+        else:
+            full_evecs = evecs
         return full_evecs, evals
 
 
