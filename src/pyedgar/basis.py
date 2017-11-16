@@ -213,7 +213,7 @@ class DiffusionAtlas(object):
         else:
             return get_optimal_bandwidth_BH(scaled_distsq, self.epses)
 
-    def make_dirichlet_basis(self, k, outside_domain=None):
+    def make_dirichlet_basis(self, k, in_domain=None):
         """Creates a diffusion map basis set that obeys the homogeneous
         Dirichlet boundary conditions on the domain.  This is done by taking
         the eigenfunctions of the diffusion map submatrix on the domain.
@@ -222,8 +222,8 @@ class DiffusionAtlas(object):
         ----------
         k : int
             Number of basis functions to create.
-        outside_domain : 1D array-like, optional
-            Array of the same length as the data, where each element is 1 or True if that datapoint is outside the domain, and 0 or False if it is in the domain.  Naturally, this must be the length as the current dataset.  If None (default), all points assumed to be in the domaain.
+        in_domain : 1D array-like, optional
+            Array of the same length as the data, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.  Naturally, this must be the length as the current dataset.  If None (default), all points assumed to be in the domain.
 
 
         Returns
@@ -235,15 +235,18 @@ class DiffusionAtlas(object):
 
         """
         submat = self.L
-        if outside_domain is not None:
-            domain = 1 - outside_domain
+        npoints = self.L.shape[0]
+        if in_domain is not None:
+            domain = np.where(in_domain > 0)[0]
             submat = submat[domain][:, domain]
         evals, evecs = spsl.eigs(submat, k, which='LR')
         # Sort by eigenvalue.
         idx = evals.argsort()[::-1]
         evals = evals[idx]
         evecs = evecs[:, idx]
-        return evecs, evals
+        full_evecs = np.zeros((npoints,k))
+        full_evecs[domain,:] = evecs
+        return full_evecs, evals
 
 
 def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-40, 41), verbosity=0, metric='euclidean', metric_params=None):
