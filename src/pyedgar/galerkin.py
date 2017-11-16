@@ -90,7 +90,7 @@ def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
     # Solve for comittor
     coeffs = spl.solve(L, -L_test)
     new_vals = np.dot(basis_flat_traj, coeffs)
-    return DynamicalDataset((new_vals, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
+    return DynamicalDataset((new_vals+test_fxn_data, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
 
 
 def compute_change_of_measure(basis, lag=1, fix=1):
