@@ -248,7 +248,7 @@ class DiffusionAtlas(object):
         # If using a submatrix, expand back to full size
         if in_domain is not None:
             full_evecs = np.zeros((npoints, k))
-            full_evecs[domain, :] = evecs
+            full_evecs[domain, :] = np.real(evecs)
         else:
             full_evecs = evecs
         return full_evecs, evals
