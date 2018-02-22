@@ -28,7 +28,8 @@ def make_random_walk():
     return (basis, flat_traj, traj_edges)
 
 
-def test_mfpt(make_random_walk):
+@pytest.mark.parametrize('timestep', [None, 0.1, 1.0, 1.])
+def test_mfpt(make_random_walk, timestep):
     error_tol = 1E-10
     basis, flat_traj, traj_edges = make_random_walk
     basis = basis[:, 5:16]
@@ -36,12 +37,15 @@ def test_mfpt(make_random_walk):
     stateA = (flat_traj < -.5) * (flat_traj > 0.5)
     stateA_dset = DynamicalDataset((stateA, traj_edges))
     basis_dset = DynamicalDataset((basis, traj_edges))
-    mfpt = galerkin.compute_mfpt(basis_dset, stateA_dset).get_flat_data()[0]
+    mfpt = galerkin.compute_mfpt(basis_dset, stateA_dset, timestep=timestep).get_flat_data()[0]
     for i in range(nbasis):
         basis_vector = basis[:, i]
         mfpt_true = 2*(i+1)*(11-i)
-        print(np.where(basis_vector > 0)[0])
+        if timestep is not None:
+            mfpt_true *= timestep
         mfpt_i = mfpt[np.where(basis_vector > 0)[0]].flatten()
+        print(mfpt_i, timestep)
+        print(mfpt_true)
         error = (mfpt_i - mfpt_true)
         assert(np.all(error < error_tol))
 

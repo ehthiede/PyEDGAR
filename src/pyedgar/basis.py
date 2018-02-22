@@ -192,22 +192,33 @@ class DiffusionAtlas(object):
         self.pi = L
         self.epsilon = epsilon
 
-    def get_bandwidth_fxn(self):
+    def get_bandwidth_fxn(self, return_eps_opt=False):
         N = len(self.data)
         if ((self.beta == 0) or (self.beta == '0')):
-            return np.ones(N), None  # Handle uniform bandwidth case.
+            rho = np.ones(N)
+            d = None
+            eps_opt = None
         else:
             # Use q^beta as bandwidth, where q is an estimate of the density.
-            q, d_est, eps_opt = kde(self.data, epses=self.epses, nneighbors=self.nneighbors, d=self.d)
+            q, d_est, eps_opt = kde(self.data, epses=self.epses, nneighbors=self.nneighbors, d=self.d, bandwidth_fxn=self._get_optimal_bandwidth)
             if self.d is None:
                 d = d_est
+            else:
+                d = self.d
 
             # If beta parameter is an expression, evaluate it and convert to float
             print(self.beta, d)
             beta = _eval_param(self.beta, d)
+            rho = q**beta
+        if return_eps_opt:
+            return q**beta, d, eps_opt
+        else:
             return q**beta, d
 
-    def _get_optimal_bandwidth(self, scaled_distsq):
+    def _get_optimal_bandwidth(self, scaled_distsq, epses=None):
+        if epses is None:
+            epses = self.epses
+
         if isinstance(self.epses, numbers.Number):
             return self.epses, self.d
         else:
@@ -254,7 +265,7 @@ class DiffusionAtlas(object):
         return full_evecs, evals
 
 
-def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-40, 41), verbosity=0, metric='euclidean', metric_params=None):
+def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-40, 41), verbosity=0, metric='euclidean', metric_params=None, bandwidth_fxn=None):
     """Code implementing Kernel Density estimatation.  Algorithm is heavily based on that presented in Berry, Giannakis, and Harlim, Phys. Rev. E. 91, 032915 (2015).
 
     Parameters
@@ -294,6 +305,8 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
     if len(np.shape(data)) == 1:  # If data is 1D structure, make it 2D
         data = np.array([data])
         data = np.transpose(data)
+    if bandwidth_fxn is None:
+        bandwidth_fxn = get_optimal_bandwidth_BH
     data = np.array([dat for dat in data])
 
     # Get nearest neighbors
@@ -319,7 +332,7 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
     if isinstance(epses, numbers.Number):
         eps_opt = epses
     else:
-        eps_opt, d_est = get_optimal_bandwidth_BH(scaled_distsq, epses=epses)
+        eps_opt, d_est = bandwidth_fxn(scaled_distsq, epses=epses)
         if d is None:  # If dimensionality is not provided, use estimated value.
             d = d_est
 
@@ -333,7 +346,7 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
     return q0, d, eps_opt
 
 
-def get_optimal_bandwidth_BH(scaled_distsq, epses=2.**np.arange(-40, 41)):
+def get_optimal_bandwidth_BH(scaled_distsq, epses=None):
     """Calculates the optimal bandwidth for kernel density estimation, according to the algorithm of Berry and Harlim.
 
     Parameters
@@ -343,6 +356,8 @@ def get_optimal_bandwidth_BH(scaled_distsq, epses=2.**np.arange(-40, 41)):
     epses : 1D array-like, optional
         Possible values of the bandwidth constant.  The optimal value is selected by estimating the derivative in Giannakis, Berry, and Harlim using a forward difference.  Note: it is explicitely assumed that the the values are either monotonically increasing or decreasing.  Default is all powers of two from 2^-40 to 2^40.
     """
+    if epses is None:
+        epses = 2.**np.arange(-40, 41)
     # Calculate double sum.
     log_T = []
     log_eps = []

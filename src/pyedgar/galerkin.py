@@ -13,7 +13,7 @@ import scipy.linalg as spl
 from .dataset import DynamicalDataset
 
 
-def compute_mfpt(basis, state_A, lag=None, timestep=1.):
+def compute_mfpt(basis, state_A, lag=None, timestep=None):
     """Calculates the mean first passage time into state A as a function of
     each point.
 
@@ -38,18 +38,21 @@ def compute_mfpt(basis, state_A, lag=None, timestep=1.):
     """
     # REWRITE ONCE YOU EXPAND INITIAL IP FUNCTION
     L = basis.compute_generator(lag=lag)
+    if timestep is not None:
+        print(basis.timestep, timestep)
+        L *= basis.timestep / timestep
     basis_flat_traj, basis_traj_edges = basis.get_flat_data()
     state_A_flat_traj = state_A.get_flat_data()[0]
     complement_A = (state_A_flat_traj.astype('int')-1)
     comp_A_dset = DynamicalDataset((complement_A, basis_traj_edges))
     beta = basis.initial_inner_product(comp_A_dset)
     coeffs = spl.solve(L, beta)
-    new_vals = np.dot(basis_flat_traj, coeffs)
+    new_vals = np.dot(basis_flat_traj, coeffs) 
     return DynamicalDataset((new_vals, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
 
 
 def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
-    """Calculates the mean first passage time into state A as a function of
+    """Calculates the forward committor into state A as a function of
     each point.
 
     Parameters
