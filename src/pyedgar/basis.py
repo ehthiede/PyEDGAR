@@ -193,9 +193,7 @@ class DiffusionAtlas(object):
         self.epsilon = epsilon
 
     def get_bandwidth_fxn(self, return_eps_opt=False):
-        N = len(self.data)
         if ((self.beta == 0) or (self.beta == '0')):
-            rho = np.ones(N)
             d = None
             eps_opt = None
         else:
@@ -209,7 +207,6 @@ class DiffusionAtlas(object):
             # If beta parameter is an expression, evaluate it and convert to float
             print(self.beta, d)
             beta = _eval_param(self.beta, d)
-            rho = q**beta
         if return_eps_opt:
             return q**beta, d, eps_opt
         else:
