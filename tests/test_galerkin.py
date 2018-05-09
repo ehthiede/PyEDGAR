@@ -55,8 +55,8 @@ def test_committor(make_random_walk):
     basis, flat_traj, traj_edges = make_random_walk
     basis = basis[:, 5:16]
     nbasis = 11
-    stateA = (flat_traj < -.5)
-    stateB = (flat_traj > 0.5)
+    stateA = (flat_traj < -.5).astype('int')
+    stateB = (flat_traj > 0.5).astype('int')
     stateA_dset = DynamicalDataset((stateA, traj_edges))
     stateB_dset = DynamicalDataset((stateB, traj_edges))
     basis_dset = DynamicalDataset((basis, traj_edges))
