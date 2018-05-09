@@ -83,7 +83,7 @@ def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
     # Calculate approximate action of generator on test fxn
     initial_points = basis.get_initial_final_split(lag)[0]
     test_fxn_data = test_fxn.get_flat_data()[0].flatten()
-    test_fxn_diff_part = (test_fxn_data[lag:]-test_fxn_data[:-lag])/basis.timestep
+    test_fxn_diff_part = (test_fxn_data[lag:]-test_fxn_data[:-lag])/(basis.timestep* lag)
     test_fxn_diff = np.zeros(test_fxn_data.shape)
     test_fxn_diff[:-lag] = test_fxn_diff_part
     test_fxn_diff = test_fxn_diff[initial_points]
