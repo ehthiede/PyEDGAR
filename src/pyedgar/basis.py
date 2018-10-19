@@ -190,7 +190,7 @@ class DiffusionAtlas(object):
         self.K = K
         self.L = L
         self.pi = pi
-        self.rho = self.rho
+        self.rho = rho
         self.epsilon = epsilon
 
     def get_bandwidth_fxn(self, return_eps_opt=False):
