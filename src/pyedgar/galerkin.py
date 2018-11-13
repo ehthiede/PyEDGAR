@@ -11,6 +11,7 @@ import numpy as np
 import scipy.linalg as spl
 
 from .dataset import DynamicalDataset
+from .data_manipulation import get_initial_final_split, tlist_to_flat
 
 
 def compute_mfpt(basis, state_A, lag=None, timestep=None):
@@ -36,19 +37,18 @@ def compute_mfpt(basis, state_A, lag=None, timestep=None):
         Dynamical dataset object containing the values of the mean first passage time at each point.
 
     """
-    # REWRITE ONCE YOU EXPAND INITIAL IP FUNCTION
-    L = basis.compute_generator(lag=lag)
-    if timestep is not None:
-        print(basis.timestep, timestep)
-        L *= basis.timestep / timestep
-    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
-    state_A_flat_traj = state_A.get_flat_data()[0]
-    complement_A = (state_A_flat_traj.astype('int')-1)
-    comp_A_dset = DynamicalDataset((complement_A, basis_traj_edges))
-    beta = basis.initial_inner_product(comp_A_dset)
-    coeffs = spl.solve(L, beta)
-    new_vals = np.dot(basis_flat_traj, coeffs)
-    return DynamicalDataset((new_vals, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
+    if timestep is None:
+        dt = basis.timestep
+    else:
+        dt = timestep
+    if lag is None:
+        lag = basis.lag
+    basis_list = basis.get_tlist()
+    stateA_list = state_A.get_tlist()
+    comp_list = [(A_i - 1.) for A_i in stateA_list]
+    soln = compute_fwd_FK(basis_list, comp_list, lag=lag, dt=dt)
+
+    return DynamicalDataset(soln, lag=basis.lag, timestep=basis.timestep)
 
 
 def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
@@ -79,21 +79,11 @@ def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
         lag = basis.lag
     if test_fxn is None:
         test_fxn = stateB
-    L = basis.compute_generator(lag=lag)
-    # Calculate approximate action of generator on test fxn
-    initial_points = basis.get_initial_final_split(lag)[0]
-    test_fxn_data = test_fxn.get_flat_data()[0].flatten()
-    test_fxn_diff_part = (test_fxn_data[lag:]-test_fxn_data[:-lag])/(basis.timestep * lag)
-    test_fxn_diff = np.zeros(test_fxn_data.shape)
-    test_fxn_diff[:-lag] = test_fxn_diff_part
-    test_fxn_diff = test_fxn_diff[initial_points]
-    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
-    basis_initial_points = basis_flat_traj[initial_points]
-    L_test = np.dot(basis_initial_points.T, test_fxn_diff)/len(initial_points)
-    # Solve for comittor
-    coeffs = spl.solve(L, -L_test)
-    new_vals = np.dot(basis_flat_traj, coeffs)
-    return DynamicalDataset((new_vals+test_fxn_data, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
+    basis_list = basis.get_tlist()
+    guess_list = test_fxn.get_tlist()
+    h = [np.zeros(gi.shape) for gi in guess_list]
+    soln = compute_fwd_FK(basis_list, h, r=guess_list, lag=lag, dt=1.)
+    return DynamicalDataset(soln, lag=basis.lag, timestep=basis.timestep)
 
 
 def compute_change_of_measure(basis, lag=1, fix=1):
@@ -126,12 +116,12 @@ def compute_change_of_measure(basis, lag=1, fix=1):
     pi[not_fixed] = pi_notfixed  # All coefficients
     basis_flat_traj, basis_traj_edges = basis.get_flat_data()
     pi_realspace = np.dot(basis_flat_traj, pi)  # Convert back to realspace.
-    # As positivity is not guaranteed, try to ensure most values are positive
+    # As positivity is not guaranteed, we try to ensure most values are positive
     pi_realspace *= np.sign(np.median(pi_realspace))
     return DynamicalDataset((pi_realspace, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
 
 
-def compute_esystem(basis, lag=1, left=False, right=True):
+def compute_esystem(basis, lag=1, dt=1., left=False, right=True):
     """Calculates the eigenvectors and eigenvalues of the generator through
     Galerkin expansion.
 
@@ -160,8 +150,13 @@ def compute_esystem(basis, lag=1, left=False, right=True):
     if lag is None:
         lag = basis.lag
     basis_flat_traj, basis_traj_edges = basis.get_flat_data()
-    L = basis.compute_generator(lag=lag)
-    S = basis.initial_inner_product(basis, lag=lag)
+    basis_list = basis.get_tlist()
+    K = compute_correlation_mat(basis_list, lag=lag)
+    S = compute_stiffness_mat(basis_list, lag=lag)
+    L = (K - S) / (lag * dt)
+    # L = basis.compute_generator(lag=lag)
+    # S = basis.initial_inner_product(basis, lag=lag)
+
     # Calculate, sort eigensystem
     if (left and right):
         evals, evecs_l, evecs_r = spl.eig(L, b=S, left=True, right=True)
@@ -203,3 +198,110 @@ def _sort_esystem(evals, evec_collection):
     sorted_evals = evals[idx]
     sorted_evecs = [evecs[:, idx] for evecs in evec_collection]
     return sorted_evals, sorted_evecs
+
+
+def compute_fwd_FK(basis, h, r=None, lag=1, dt=1., return_coeffs=False):
+    """
+    Solves the forward Feynman-Kac problem Lg=h on a domain D, with boundary
+    conditions g=b on the complement of D. To account for the boundary
+    conditions, we solve the homogeneous problem Lg = h - Lr, where r is the
+    provided guess.
+
+    Parameters
+    ----------
+    traj_data : list of arrays OR single numpy array
+        Value of the basis functions at every time point.  Should only be nonzero
+        for points on the domain.
+    h : list of 1d arrays or single 1d array
+        Value of the RHS of the FK formula.  This should only be nonzero at
+        points on the domain, Domain.
+    r : list of 1d arrays or single 1d array, optional
+        Value of the guess function.  Should be equal to b every point off of
+        the domain.  IF not provided, the boundary conditions are assumed to be
+        homogeneous.
+    lag : int
+        Number of timepoints in the future to use for the finite difference in
+        the discrete-time generator.  If not provided, defaults to 1.
+    timestep : scalar, optional
+        Time between timepoints in the trajectory data.  Defaults to 1.
+
+    Returns
+    -------
+    g : list of arrays
+        Estimated solution to the Feynman-Kac problem.
+    coeffs : ndarray
+        Coefficients for the solution, only returned if return_coeffs is True.
+    """
+    h = [h_i.reshape(-1, 1).astype('float') for h_i in h]
+    L_basis = compute_generator(basis, lag=lag, dt=dt)
+    h_i = compute_stiffness_mat(basis, h, lag=lag)
+    if r is not None:
+        r = [r_i.reshape(-1, 1) for r_i in r]
+        L_guess = compute_generator(basis, r, lag=lag, dt=dt)
+        h_i -= L_guess
+    coeffs = spl.solve(L_basis, h_i.ravel())
+
+    # Construct solution vector
+    N_traj = len(basis)
+    soln = [np.dot(basis[i], coeffs) for i in range(N_traj)]
+    if r is not None:
+        print([si.shape for si in soln])
+        print([ri.shape for ri in r])
+        print('shapes!')
+        soln = [soln[i] + r[i].ravel() for i in range(N_traj)]
+
+    # Return calculated values
+    if return_coeffs:
+        return soln, coeffs
+    else:
+        return soln
+
+
+def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
+    """
+    """
+    if Ys is None:
+        Ys = Xs
+    # Move to flat convention for easier processing.
+    X_flat, traj_edges = tlist_to_flat(Xs)
+    Y_flat = tlist_to_flat(Ys)[0]
+    if com is not None:
+        com_flat = tlist_to_flat(com)
+        X_flat *= com_flat
+
+    # Split into initial, final points
+    initial_indices, final_indices = get_initial_final_split(traj_edges)
+    Y_t_lag = Y_flat[final_indices]
+    X_t_0 = X_flat[initial_indices]
+
+    # Calculate correlation, stiffness matrices.
+    N = X_t_0.shape[0]
+    K = X_t_0.T.dot(Y_t_lag) / float(N)
+    return K
+
+
+def compute_stiffness_mat(Xs, Ys=None, lag=1, com=None):
+    if Ys is None:
+        Ys = Xs
+    # Move to flat convention for easier processing.
+    X_flat, traj_edges = tlist_to_flat(Xs)
+    Y_flat = tlist_to_flat(Ys)[0]
+    if com is not None:
+        com_flat = tlist_to_flat(com)
+        X_flat *= com_flat
+
+    # Split into initial, final points
+    initial_indices, final_indices = get_initial_final_split(traj_edges)
+    Y_t_0 = Y_flat[initial_indices]
+    X_t_0 = X_flat[initial_indices]
+    N = X_t_0.shape[0]
+    S = X_t_0.T.dot(Y_t_0) / float(N)
+    return S
+
+
+def compute_generator(Xs, Ys=None, lag=1, dt=1., com=None):
+    if Ys is None:
+        Ys = Xs
+    K = compute_correlation_mat(Xs, Ys, lag=lag, com=com)
+    S = compute_stiffness_mat(Xs, Ys, lag=lag, com=com)
+    return (K - S) / (lag * dt)

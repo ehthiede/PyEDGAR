@@ -77,3 +77,33 @@ def flat_to_tlist(traj_2d, traj_edges):
         stop = traj_edges[i + 1]
         trajs.append(traj_2d[start:stop])
     return trajs
+    
+
+def get_initial_final_split(traj_edges, lag=1):
+    """Returns the incides of the points in the flat trajectory of the initial and final sample points.
+    In this context, initial means the first N-lag points, and final means the last N-lag points.
+-
+    Parameters
+    ----------
+    lag : int, optional
+        Number of timepoints in the future to look into the future for the transfer operator.  Default is the value provided when constructing the dynamical dataset object.
+
+    Returns
+    -------
+    t_0_indices : 1D numpy array
+        Indices in the flattened trajectory data of all the points at the initial times.
+
+    t_0_indices : 1D numpy array
+        Indices in the flattened trajectory data of all the points at the final times.
+
+    """
+    ntraj = len(traj_edges) - 1
+    t_0_indices = []
+    t_lag_indices = []
+    for i in range(ntraj):
+        t_start = traj_edges[i]
+        t_stop = traj_edges[i + 1]
+        if (t_stop - t_start) > lag:
+            t_0_indices += range(t_start, t_stop - lag)
+            t_lag_indices += range(t_start + lag, t_stop)
+    return np.array(t_0_indices), np.array(t_lag_indices)
