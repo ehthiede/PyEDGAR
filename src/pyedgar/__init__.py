@@ -7,9 +7,9 @@ from . import data_manipulation, basis, galerkin
 # from .dataset import DynamicalDataset
 
 __author__ = "Erik Henning Thiede"
-__license__ = "GPL"
+__license__ = "MIT"
 __maintainer__ = "Erik Henning Thiede"
 __email__ = "thiede@uchicago.edu"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = ['galerkin', 'basis',
            'data_manipulation', 'DynamicalDataset']
