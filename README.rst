@@ -11,8 +11,9 @@ Overview
       - |docs|
     * - tests
       - | |travis|
-        |
-    * - package
+        | |codecov|
+        
+..    * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
 
@@ -24,23 +25,27 @@ Overview
     :alt: Travis-CI Build Status
     :target: https://travis-ci.org/ehthiede/PyEDGAR
 
-.. |version| image:: https://img.shields.io/pypi/v/pyedgar.svg
+ .. |codecov| image:: https://codecov.io/gh/ehthiede/PyEDGAR/branch/master/graph/badge.svg
+    :alt: Coverage Status
+    :target: https://codecov.io/gh/DiffusionMapsAcademics/pyDiffMap
+
+.. .. |version| image:: https://img.shields.io/pypi/v/pyedgar.svg
     :alt: PyPI Package latest release
     :target: https://pypi.python.org/pypi/pyedgar
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/ehthiede/PyEDGAR/v0.1.0.svg
+.. .. |commits-since| image:: https://img.shields.io/github/commits-since/ehthiede/PyEDGAR/v0.1.0.svg
     :alt: Commits since latest release
     :target: https://github.com/ehthiede/PyEDGAR/compare/v0.1.0...master
 
-.. |wheel| image:: https://img.shields.io/pypi/wheel/pyedgar.svg
+.. .. |wheel| image:: https://img.shields.io/pypi/wheel/pyedgar.svg
     :alt: PyPI Wheel
     :target: https://pypi.python.org/pypi/pyedgar
 
-.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/pyedgar.svg
+.. .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/pyedgar.svg
     :alt: Supported versions
     :target: https://pypi.python.org/pypi/pyedgar
 
-.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/pyedgar.svg
+.. .. |supported-implementations| image:: https://img.shields.io/pypi/implementation/pyedgar.svg
     :alt: Supported implementations
     :target: https://pypi.python.org/pypi/pyedgar
 
@@ -54,11 +59,12 @@ Package for performing dynamical Galerkin expansion on trajectory data.  Current
 Installation
 ============
 
+You can install the package directly from the source directly by downloading the package from github and running the command below, optionally with the "-e" flag for an editable install.
+
 ::
+    
+    pip install [source_directory]
 
-    pip install pyedgar
-
-At least, this would work if the package was on pip.  Again, everything is in pre-alpha.
 
 Documentation
 =============
