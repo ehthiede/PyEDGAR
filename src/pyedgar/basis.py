@@ -117,8 +117,6 @@ class DiffusionAtlas(object):
                 d = d_est
                 if self.verbosity >= 1:
                     print("Dimensionality estimated to be %d." % d)
-        
-
 
         # Construct sparse kernel matrix.
         nn_distsq /= epsilon
@@ -329,14 +327,13 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
         # row /= 2.*rho[i]*rho[nn_indices[i]]
         row /= 2.*rho[i]*rho[nn_indices[i]]
 
-
     if isinstance(epses, numbers.Number):
         eps_opt = epses
     else:
         eps_opt, d_est = bandwidth_fxn(scaled_distsq, epses=epses)
         if d is None:  # If dimensionality is not provided, use estimated value.
             d = d_est
-    
+
     # Estimated density.
     scaled_distsq /= eps_opt
     q0 = np.mean(np.exp(-scaled_distsq), axis=1)
@@ -345,7 +342,7 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
             raise ValueError('Dimensionality needed to normalize the density estimate , but no dimensionality information found or estimated.')
     q0 /= (rho**d)
     q0 /= (2.*np.pi * eps_opt)**(d/2.)
-    ### DEBUG
+    # DEBUG
     # At this point, q0 is half that in pydiffmap
     q0 *= 2.
     return q0, d, eps_opt

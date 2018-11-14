@@ -56,10 +56,8 @@ def test_committor(make_random_walk):
     basis, flat_traj, traj_edges = make_random_walk
     basis = basis[:, 5:16]
     nbasis = 11
-    stateA = (flat_traj < -.5).astype('int')
     stateB = (flat_traj > 0.5).astype('int')
     basis_list = flat_to_tlist(basis, traj_edges)
-    stateA_list = flat_to_tlist(stateA, traj_edges)
     stateB_list = flat_to_tlist(stateB, traj_edges)
     committor = galerkin.compute_committor(basis_list, stateB_list)
     committor = tlist_to_flat(committor)[0]
