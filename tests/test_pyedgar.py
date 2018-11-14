@@ -9,4 +9,4 @@ def test_pyedgar():
     assert pyedgar.data_manipulation
     assert pyedgar.basis
     assert pyedgar.galerkin
-    assert pyedgar.DynamicalDataset
+#    assert pyedgar.DynamicalDataset

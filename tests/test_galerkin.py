@@ -4,7 +4,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 import pytest
 
-from pyedgar import DynamicalDataset, galerkin
+from pyedgar import galerkin
+from pyedgar.data_manipulation import tlist_to_flat, flat_to_tlist
 
 # Make a "random" walk starting uniformly on [-1,1] which literally moves left/right 1 out of 4 tries.
 
@@ -28,24 +29,24 @@ def make_random_walk():
     return (basis, flat_traj, traj_edges)
 
 
-@pytest.mark.parametrize('timestep', [None, 0.1, 1.0, 1.])
+@pytest.mark.parametrize('timestep', [0.1, 1.0, 1.])
 def test_mfpt(make_random_walk, timestep):
     error_tol = 1E-10
     basis, flat_traj, traj_edges = make_random_walk
     basis = basis[:, 5:16]
     nbasis = 11
     stateA = (flat_traj < -.5) * (flat_traj > 0.5)
-    stateA_dset = DynamicalDataset((stateA, traj_edges))
-    basis_dset = DynamicalDataset((basis, traj_edges))
-    mfpt = galerkin.compute_mfpt(basis_dset, stateA_dset, timestep=timestep).get_flat_data()[0]
+    basis_list = flat_to_tlist(basis, traj_edges)
+    stateA_list = flat_to_tlist(stateA, traj_edges)
+    mfpt = galerkin.compute_mfpt(basis_list, stateA_list, dt=timestep)
+    mfpt = tlist_to_flat(mfpt)[0]
+
     for i in range(nbasis):
         basis_vector = basis[:, i]
         mfpt_true = 2*(i+1)*(11-i)
         if timestep is not None:
             mfpt_true *= timestep
         mfpt_i = mfpt[np.where(basis_vector > 0)[0]].flatten()
-        print(mfpt_i, timestep)
-        print(mfpt_true)
         error = (mfpt_i - mfpt_true)
         assert(np.all(error < error_tol))
 
@@ -57,10 +58,11 @@ def test_committor(make_random_walk):
     nbasis = 11
     stateA = (flat_traj < -.5).astype('int')
     stateB = (flat_traj > 0.5).astype('int')
-    stateA_dset = DynamicalDataset((stateA, traj_edges))
-    stateB_dset = DynamicalDataset((stateB, traj_edges))
-    basis_dset = DynamicalDataset((basis, traj_edges))
-    committor = galerkin.compute_committor(basis_dset, stateA_dset, stateB_dset).get_flat_data()[0]
+    basis_list = flat_to_tlist(basis, traj_edges)
+    stateA_list = flat_to_tlist(stateA, traj_edges)
+    stateB_list = flat_to_tlist(stateB, traj_edges)
+    committor = galerkin.compute_committor(basis_list, stateB_list)
+    committor = tlist_to_flat(committor)[0]
     for i in range(nbasis):
         basis_vector = basis[:, i]
         committor_true = (i+1)*.25/3.
@@ -72,9 +74,10 @@ def test_committor(make_random_walk):
 def test_change_of_measure(make_random_walk):
     error_tol = 1E-10
     basis, flat_traj, traj_edges = make_random_walk
-    basis_dset = DynamicalDataset((basis, traj_edges))
-    change_of_measure = galerkin.compute_change_of_measure(basis_dset)
-    change_of_measure = (change_of_measure.get_flat_data()[0]).flatten()
+    basis_list = flat_to_tlist(basis, traj_edges)
+    change_of_measure = galerkin.compute_change_of_measure(basis_list)
+    # change_of_measure = (change_of_measure.get_flat_data()[0]).flatten()
+    change_of_measure = tlist_to_flat(change_of_measure)[0]
     change_of_measure /= np.sum(change_of_measure)
     error = change_of_measure - 1/21
     assert(np.all(error < error_tol))
@@ -97,17 +100,23 @@ class TestEsystem(object):
     def test_top_evecs_are_correct(self, make_random_walk, left, right):
         # Setup
         basis, flat_traj, traj_edges = make_random_walk
-        basis_dset = DynamicalDataset((basis, traj_edges))
+        # basis_dset = DynamicalDataset((basis, traj_edges))
+        basis_list = flat_to_tlist(basis, traj_edges)
         true_evecs = np.dot(basis, self.true_evec_coeffs)
         # Evaluate eigensystem
         if (left and right):
-            evals, left_evecs, right_evecs = galerkin.compute_esystem(basis_dset, left=True, right=True)
+            evals, left_evecs, right_evecs = galerkin.compute_esystem(basis_list, left=True, right=True)
         elif left:
-            evals, left_evecs = galerkin.compute_esystem(basis_dset, left=True, right=False)
+            evals, left_evecs = galerkin.compute_esystem(basis_list, left=True, right=False)
         elif right:
-            evals, right_evecs = galerkin.compute_esystem(basis_dset, left=False, right=True)
+            evals, right_evecs = galerkin.compute_esystem(basis_list, left=False, right=True)
         else:
             return
+        # Move to flat convention for easier preparation
+        if left:
+            left_evecs = tlist_to_flat(left_evecs)[0]
+        if right:
+            right_evecs = tlist_to_flat(right_evecs)[0]
         # Check right, left eigenvectors.
         for i in range(5):
             if left:
@@ -130,12 +139,13 @@ class TestEsystem(object):
     def test_top_evals_are_correct(self, make_random_walk, left, right):
         # Setup
         basis, flat_traj, traj_edges = make_random_walk
-        basis_dset = DynamicalDataset((basis, traj_edges))
+        # basis_dset = DynamicalDataset((basis, traj_edges))
+        basis_list = flat_to_tlist(basis, traj_edges)
         # Evaluate eigensystem
         if (left or right):
-            evals = galerkin.compute_esystem(basis_dset, left=left, right=right)[0]
+            evals = galerkin.compute_esystem(basis_list, left=left, right=right)[0]
             print(evals, left, right)
         else:
-            evals = galerkin.compute_esystem(basis_dset, left=False, right=False)
+            evals = galerkin.compute_esystem(basis_list, left=False, right=False)
         evals_error = np.linalg.norm(evals[:5] - self.precomputed_evals)
         assert(evals_error < self.eval_error_tol)

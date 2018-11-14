@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 # Set explicit packages
 from . import data_manipulation, basis, galerkin
-from .dataset import DynamicalDataset
+# from .dataset import DynamicalDataset
 
 __author__ = "Erik Henning Thiede"
 __license__ = "GPL"

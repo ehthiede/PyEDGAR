@@ -117,6 +117,8 @@ class DiffusionAtlas(object):
                 d = d_est
                 if self.verbosity >= 1:
                     print("Dimensionality estimated to be %d." % d)
+        
+
 
         # Construct sparse kernel matrix.
         nn_distsq /= epsilon
@@ -206,7 +208,6 @@ class DiffusionAtlas(object):
                 d = self.d
 
             # If beta parameter is an expression, evaluate it and convert to float
-            print(self.beta, d)
             beta = _eval_param(self.beta, d)
         if return_eps_opt:
             return q**beta, d, eps_opt
@@ -325,7 +326,9 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
     # Perform automatic bandwidth selection.
     scaled_distsq = np.copy(nn_distsq)
     for i, row in enumerate(scaled_distsq):
+        # row /= 2.*rho[i]*rho[nn_indices[i]]
         row /= 2.*rho[i]*rho[nn_indices[i]]
+
 
     if isinstance(epses, numbers.Number):
         eps_opt = epses
@@ -333,14 +336,18 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
         eps_opt, d_est = bandwidth_fxn(scaled_distsq, epses=epses)
         if d is None:  # If dimensionality is not provided, use estimated value.
             d = d_est
-
+    
     # Estimated density.
-    q0 = np.sum(np.exp(-scaled_distsq/eps_opt), axis=1)
+    scaled_distsq /= eps_opt
+    q0 = np.mean(np.exp(-scaled_distsq), axis=1)
     if np.any(rho-1.):
         if d is None:
             raise ValueError('Dimensionality needed to normalize the density estimate , but no dimensionality information found or estimated.')
     q0 /= (rho**d)
-    q0 *= (2.*np.pi)**(-d/2.) / len(q0)
+    q0 /= (2.*np.pi * eps_opt)**(d/2.)
+    ### DEBUG
+    # At this point, q0 is half that in pydiffmap
+    q0 *= 2.
     return q0, d, eps_opt
 
 
@@ -454,7 +461,6 @@ def _eval_param(param, d):
             if d is None:
                 raise ValueError('Dimensionality needed in evaluating %s, but no dimensionality information found or estimated.' % param)
             param = param.replace('d', str(d))
-        print(param)
         return nsp.eval(param)
     else:
         return float(param)

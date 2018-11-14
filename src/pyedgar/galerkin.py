@@ -10,80 +10,57 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 import scipy.linalg as spl
 
-from .dataset import DynamicalDataset
-from .data_manipulation import get_initial_final_split, tlist_to_flat
+from .data_manipulation import get_initial_final_split, tlist_to_flat, flat_to_tlist
 
 
-def compute_mfpt(basis, state_A, lag=None, timestep=None):
+def compute_mfpt(basis, stateA, lag=1, dt=1.):
     """Calculates the mean first passage time into state A as a function of
     each point.
 
     Parameters
     ----------
-    basis : dynamical dataset object
-        Dynamical dataset object containing the basis for the Galerkin expansion.
-        This method works much better if the basis set is zero on state A, however this is not a necessity.
-    state_A : dynamical dataset object
-        Dynamical dataset object whose values are 1 or 0, corresponding to whether or not the datapoint is in state A.
+    basis : list of trajectories
+        Basis for the Galerkin expansion. Must be zero in state A.
+    state_A : list of trajectories
+        List of trajectories where each element is 1 or 0, corresponding to whether or not the datapoint is in state A.
     lag : int, optional
         Number of timepoints in the future to use for the finite difference in the discrete-time generator.  If not provided, uses value in the generator.
     timestep : scalar, optional
         Time between timepoints in the trajectory data.
 
-
     Returns
     -------
-    mfpt : dynamical basis object
-        Dynamical dataset object containing the values of the mean first passage time at each point.
+    mfpt : list of trajectories
+        List of trajectories containing the values of the mean first passage time at each timepoint.
 
     """
-    if timestep is None:
-        dt = basis.timestep
-    else:
-        dt = timestep
-    if lag is None:
-        lag = basis.lag
-    basis_list = basis.get_tlist()
-    stateA_list = state_A.get_tlist()
-    comp_list = [(A_i - 1.) for A_i in stateA_list]
-    soln = compute_fwd_FK(basis_list, comp_list, lag=lag, dt=dt)
-
-    return DynamicalDataset(soln, lag=basis.lag, timestep=basis.timestep)
+    complement = [(A_i - 1.) for A_i in stateA]
+    soln = compute_fwd_FK(basis, complement, lag=lag, dt=dt)
+    return soln
 
 
-def compute_committor(basis, stateA, stateB, test_fxn=None, lag=1):
+def compute_committor(basis, guess_committor, lag=1):
     """Calculates the forward committor into state A as a function of
     each point.
 
     Parameters
     ----------
-    basis : dynamical dataset object
-        Dynamical dataset object containing the basis for the Galerkin expansion.
-        This method works much better if the basis set is zero on states A and B, however this is not a necessity.
-    state_A : dynamical dataset object
-        Dynamical dataset object whose values are 1 or 0, corresponding to whether or not the datapoint is in state A.
-    state_B : dynamical dataset object
-        Dynamical dataset object whose values are 1 or 0, corresponding to whether or not the datapoint is in state B.
-    test_fxn : dynamical dataset object, optional
-        The value of the test function obeying the inhomogenous boundary conditions.  If not given, taken to just be state B.
+    basis : list of trajectories
+        Basis for the Galerkin expansion. Must be zero in state A and B
+    guess_committor : list of trajectories, optional
+        The value of the guess function obeying the inhomogenous boundary conditions.
     lag : int, optional
         Number of timepoints in the future to use for the finite difference in the discrete-time generator.
 
     Returns
     -------
     committor: dynamical basis object
-        Dynamical dataset object containing the values of the committor at each point.
+        List of trajectories containing the values of the committor at each point.
 
     """
-    if lag is None:
-        lag = basis.lag
-    if test_fxn is None:
-        test_fxn = stateB
-    basis_list = basis.get_tlist()
-    guess_list = test_fxn.get_tlist()
-    h = [np.zeros(gi.shape) for gi in guess_list]
-    soln = compute_fwd_FK(basis_list, h, r=guess_list, lag=lag, dt=1.)
-    return DynamicalDataset(soln, lag=basis.lag, timestep=basis.timestep)
+    h = [np.zeros(gi.shape) for gi in guess_committor]
+    soln = compute_fwd_FK(basis, h, r=guess_committor, lag=lag, dt=1.)
+    return soln
 
 
 def compute_change_of_measure(basis, lag=1, fix=1):
@@ -91,9 +68,8 @@ def compute_change_of_measure(basis, lag=1, fix=1):
 
     Parameters
     ----------
-    basis : dynamical dataset object
-        Dynamical dataset object containing the basis for the Galerkin expansion.
-        This method works much better if the basis set is zero on states A and B, however this is not a necessity.
+    basis : list of trajectories
+        Basis for the Galerkin expansion. Must be zero in state A and B
     lag : int, optional
         Number of timepoints in the future to use for the finite difference in the discrete-time generator.
     fix : int, optional
@@ -102,23 +78,12 @@ def compute_change_of_measure(basis, lag=1, fix=1):
     Returns
     -------
     change_of_measure : dynamical basis object
-        Dynamical dataset object containing the values of the change of measure to the stationary distribution at each point.
+        List of trajectories containing the values of the change of measure to the stationary distribution at each point.
 
     """
-    if lag is None:
-        lag = basis.lag
-    L = basis.compute_generator(lag=lag)
-    not_fixed = list(range(0, fix))+list(range(fix+1, len(L)))
-    b = -L[fix, not_fixed]
-    L_submat_transpose = (L[not_fixed, :][:, not_fixed]).T
-    pi_notfixed = spl.solve(L_submat_transpose, b)  # coeffs of not fixed states
-    pi = np.ones(len(L))
-    pi[not_fixed] = pi_notfixed  # All coefficients
-    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
-    pi_realspace = np.dot(basis_flat_traj, pi)  # Convert back to realspace.
-    # As positivity is not guaranteed, we try to ensure most values are positive
-    pi_realspace *= np.sign(np.median(pi_realspace))
-    return DynamicalDataset((pi_realspace, basis_traj_edges), lag=basis.lag, timestep=basis.timestep)
+    evals, evecs = compute_esystem(basis, lag, left=True, right=False)
+    com = [ev_i[:, 0] for ev_i in evecs]
+    return com
 
 
 def compute_esystem(basis, lag=1, dt=1., left=False, right=True):
@@ -127,8 +92,8 @@ def compute_esystem(basis, lag=1, dt=1., left=False, right=True):
 
     Parameters
     ----------
-    basis : dynamical dataset object
-        Dynamical dataset object containing the basis for the Galerkin expansion.
+    basis : list of trajectories
+        List of trajectories containing the basis for the Galerkin expansion.
         This method works much better if the basis set is zero on states A and B, however this is not a necessity.
     lag : int, optional
         Number of timepoints in the future to use for the finite difference in the discrete-time generator.
@@ -141,34 +106,33 @@ def compute_esystem(basis, lag=1, dt=1., left=False, right=True):
     -------
     eigenvalues : numpy array
         Numpy array containing the eigenvalues of the generator.
-    left_eigenvectors : dynamical dataset object, optional
-        If left was set to true, the left eigenvectors are returned as a dynamical dataset object.
-    right_eigenvectors : dynamical dataset object, optional
-        If right was set to true, the right eigenvectors are returned as a dynamical dataset object.
+    left_eigenvectors : list of trajectories, optional
+        If left was set to true, the left eigenvectors are returned as a list of trajectories.
+    right_eigenvectors : list of trajectories, optional
+        If right was set to true, the right eigenvectors are returned as a list of trajectories.
 
     """
     if lag is None:
         lag = basis.lag
-    basis_flat_traj, basis_traj_edges = basis.get_flat_data()
-    basis_list = basis.get_tlist()
+    basis_list = basis
+    basis_flat_traj, traj_edges = tlist_to_flat(basis_list)
     K = compute_correlation_mat(basis_list, lag=lag)
     S = compute_stiffness_mat(basis_list, lag=lag)
     L = (K - S) / (lag * dt)
-    # L = basis.compute_generator(lag=lag)
-    # S = basis.initial_inner_product(basis, lag=lag)
 
     # Calculate, sort eigensystem
     if (left and right):
         evals, evecs_l, evecs_r = spl.eig(L, b=S, left=True, right=True)
         evals, [evecs_l, evecs_r] = _sort_esystem(evals, [evecs_l, evecs_r])
-        expanded_evecs_l = np.dot(basis_flat_traj, evecs_l)
-        expanded_evecs_r = np.dot(basis_flat_traj, evecs_r)
-        return evals, expanded_evecs_l, expanded_evecs_r
+        evecs_l = flat_to_tlist(np.dot(basis_flat_traj, evecs_l), traj_edges)
+        evecs_r = flat_to_tlist(np.dot(basis_flat_traj, evecs_r), traj_edges)
+        return evals, evecs_l, evecs_r
     elif (left or right):
         evals, evecs = spl.eig(L, b=S, left=left, right=right)
         evals, [evecs] = _sort_esystem(evals, [evecs])
-        expanded_evecs = np.dot(basis_flat_traj, evecs)
-        return evals, expanded_evecs
+        evecs = np.dot(basis_flat_traj, evecs)
+        evecs = flat_to_tlist(evecs, traj_edges)
+        return evals, evecs
     else:
         evals = spl.eig(L, b=S, left=False, right=False)
         return np.sort(evals)[::-1]
@@ -245,9 +209,6 @@ def compute_fwd_FK(basis, h, r=None, lag=1, dt=1., return_coeffs=False):
     N_traj = len(basis)
     soln = [np.dot(basis[i], coeffs) for i in range(N_traj)]
     if r is not None:
-        print([si.shape for si in soln])
-        print([ri.shape for ri in r])
-        print('shapes!')
         soln = [soln[i] + r[i].ravel() for i in range(N_traj)]
 
     # Return calculated values
@@ -300,6 +261,9 @@ def compute_stiffness_mat(Xs, Ys=None, lag=1, com=None):
 
 
 def compute_generator(Xs, Ys=None, lag=1, dt=1., com=None):
+    """
+    Computes the generator matrix.
+    """
     if Ys is None:
         Ys = Xs
     K = compute_correlation_mat(Xs, Ys, lag=lag, com=com)
