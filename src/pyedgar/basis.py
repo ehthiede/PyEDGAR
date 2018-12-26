@@ -20,7 +20,7 @@ class DiffusionAtlas(object):
     bases with various boundary conditions."""
 
     def __init__(self, nneighbors=600, d=None,
-                 alpha='0', beta='-1/d', epses=2.**np.arange(-40, 41),
+                 alpha='0', beta='-1/d', epses=None,
                  rho_norm=False, metric='euclidean', metric_params=None, verbosity=0):
         """Constructs the factory object.  The factory object can then be
         called to make diffusion map bases of various boundary conditions.
@@ -56,12 +56,15 @@ class DiffusionAtlas(object):
         self.d = d
         self.alpha = alpha
         self.beta = beta
-        self.epses = epses
         self.eps = None
         self.rho_norm = rho_norm
         self.metric = metric
         self.metric_params = metric_params
         self.verbosity = verbosity
+        if epses is not None:
+            self.epses = epses
+        else:
+            self.epses = 2.**np.arange(-40, 41)
 
     def fit(self, data, rho=None, point_weights=None):
         """Constructs the diffusion map on the dataset.
@@ -262,7 +265,7 @@ class DiffusionAtlas(object):
         return full_evecs, evals
 
 
-def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-40, 41), verbosity=0, metric='euclidean', metric_params=None, bandwidth_fxn=None):
+def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=None, verbosity=0, metric='euclidean', metric_params=None, bandwidth_fxn=None):
     """Code implementing Kernel Density estimatation.  Algorithm is heavily based on that presented in Berry, Giannakis, and Harlim, Phys. Rev. E. 91, 032915 (2015).
 
     Parameters
@@ -304,6 +307,10 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
         data = np.transpose(data)
     if bandwidth_fxn is None:
         bandwidth_fxn = get_optimal_bandwidth_BH
+    if epses is not None:
+        epses = epses
+    else:
+        epses = 2.**np.arange(-40, 41)
     data = np.array([dat for dat in data])
 
     # Get nearest neighbors

@@ -303,7 +303,23 @@ def compute_adj_FK(basis, h, com=None, r=None, lag=1, dt=1., return_coeffs=False
 
 
 def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
-    """
+    """Computes the time-lagged correlation matrix between two sets of observables.
+
+    Parameters
+    ----------
+    Xs : list of trajectories
+        List of trajectories for the first set of observables.
+    Ys : list of trajectories, optional
+        List of trajectories for the second set of observables.  If None, set to be X.
+    lag : int, optional
+        Lag to use in the correlation matrix.  Default is one step.
+    com : list of trajectories
+        Values of the change of measure against which to compute the average
+
+    Returns
+    -------
+    K : numpy array
+        The time-lagged correlation matrix between X and Y.
     """
     if Ys is None:
         Ys = Xs
@@ -315,7 +331,7 @@ def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
         X_flat *= com_flat
 
     # Split into initial, final points
-    initial_indices, final_indices = get_initial_final_split(traj_edges)
+    initial_indices, final_indices = get_initial_final_split(traj_edges, lag=lag)
     Y_t_lag = Y_flat[final_indices]
     X_t_0 = X_flat[initial_indices]
 
@@ -326,6 +342,25 @@ def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
 
 
 def compute_stiffness_mat(Xs, Ys=None, lag=1, com=None):
+    """Computes the stiffness matrix between two sets of observables.
+
+    Parameters
+    ----------
+    Xs : list of trajectories
+        List of trajectories for the first set of observables.
+    Ys : list of trajectories, optional
+        List of trajectories for the second set of observables.  If None, set to be X.
+    lag : int, optional
+        Lag to use in the correlation matrix.  Default is one step.
+        This is required as the stiffness is only evaluated over the initial points.
+    com : list of trajectories
+        Values of the change of measure against which to compute the average
+
+    Returns
+    -------
+    S : numpy array
+        The time-lagged stiffness matrix between X and Y.
+    """
     if Ys is None:
         Ys = Xs
     # Move to flat convention for easier processing.
@@ -336,7 +371,7 @@ def compute_stiffness_mat(Xs, Ys=None, lag=1, com=None):
         X_flat *= com_flat
 
     # Split into initial, final points
-    initial_indices, final_indices = get_initial_final_split(traj_edges)
+    initial_indices, final_indices = get_initial_final_split(traj_edges, lag=lag)
     Y_t_0 = Y_flat[initial_indices]
     X_t_0 = X_flat[initial_indices]
     N = X_t_0.shape[0]
@@ -346,7 +381,25 @@ def compute_stiffness_mat(Xs, Ys=None, lag=1, com=None):
 
 def compute_generator(Xs, Ys=None, lag=1, dt=1., com=None):
     """
-    Computes the generator matrix.
+    Computes the matrix of inner product elements against the generator.
+
+    Parameters
+    ----------
+    Xs : list of trajectories
+        List of trajectories for the first set of observables.
+    Ys : list of trajectories, optional
+        List of trajectories for the second set of observables.  If None, set to be X.
+    lag : int, optional
+        Lag to use in the correlation matrix.  Default is one step.
+    dt: float, optional
+        time per step of dynamics. Default is one time unit.
+    com : list of trajectories
+        Values of the change of measure against which to compute the average.
+
+    Returns
+    -------
+    L : numpy array
+        The approximation to the inner product <X, L Y>.
     """
     if Ys is None:
         Ys = Xs
