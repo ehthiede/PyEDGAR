@@ -11,8 +11,9 @@ Overview
       - |docs|
     * - tests
       - | |travis|
-        |
-    * - package
+        | |codecov|
+        
+..    * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
 
@@ -23,6 +24,10 @@ Overview
 .. |travis| image:: https://travis-ci.org/ehthiede/PyEDGAR.svg?branch=master
     :alt: Travis-CI Build Status
     :target: https://travis-ci.org/ehthiede/PyEDGAR
+
+.. |codecov| image:: https://codecov.io/gh/ehthiede/PyEDGAR/branch/master/graph/badge.svg
+    :alt: Coverage Status
+    :target: https://codecov.io/gh/ehthiede/PyEDGAR
 
 .. |version| image:: https://img.shields.io/pypi/v/pyedgar.svg
     :alt: PyPI Package latest release
@@ -47,18 +52,20 @@ Overview
 
 .. end-badges
 
-Package for performing dynamical Galerkin expansion on trajectory data.  Currently in pre-alpha, all very much in development. 
+Package for performing dynamical Galerkin expansion on trajectory data.  Currently in pre-alpha.
 
 * Free software: MIT license
 
 Installation
 ============
 
+To install the code, download the directory from github, navigate into the folder, and run
+
 ::
 
-    pip install pyedgar
+    pip install -e .
 
-At least, this would work if the package was on pip.  Again, everything is in pre-alpha.
+We are currently working on getting the package onto pip.
 
 Documentation
 =============
