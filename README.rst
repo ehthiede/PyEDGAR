@@ -17,7 +17,7 @@ Overview
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
 
-.. |docs| image:: https://readthedocs.org/projects/PyEDGAR/badge/?style=flat
+.. |docs| image:: https://readthedocs.org/projects/pyedgar/badge/?style=flat
     :target: https://pyedgar.readthedocs.io
     :alt: Documentation Status
 
