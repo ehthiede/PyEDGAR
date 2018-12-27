@@ -18,7 +18,7 @@ Overview
         | |commits-since|
 
 .. |docs| image:: https://readthedocs.org/projects/PyEDGAR/badge/?style=flat
-    :target: https://readthedocs.org/projects/PyEDGAR
+    :target: https://pyedgar.readthedocs.io
     :alt: Documentation Status
 
 .. |travis| image:: https://travis-ci.org/ehthiede/PyEDGAR.svg?branch=master
