@@ -17,51 +17,52 @@ from ._NumericStringParser import _NumericStringParser
 
 class DiffusionAtlas(object):
     """The diffusion atlas is a factory object for constructing diffusion map
-    bases with various boundary conditions."""
+    bases with various boundary conditions.
+
+    Parameters
+    ----------
+    nneighbors : int or None, optional
+        Number of neighbors to include in constructing the diffusion map.  If None, all neighbors are used.  Default is 600 neighbors
+    d : int or None, optional
+        Dimension of the system. If None and alpha or beta settings require the dimensionality,
+        the dimension is estimated using the kernel density estimate,
+        if a kernel density estimate is performed.
+    alpha : float or string, optional
+        Parameter for left normalization of the Diffusion map.
+        Either a float, or a string that can be interpreted as a mathematical expression.
+        The variable "d" stands for dimension, so "1/d" sets the alpha to one over the system dimension.
+        Default is 0
+    beta : float or string, optional
+        Parameter for constructing the bandwidth function for the Diffusion map.  If rho is None, the bandwidth function will be set to q_\epsilon^beta, where q_\epsilon is an estimate of the density constructed using a kernel density estimate.  If rho is provided, this parameter is unused.  As with alpha, this will interpret strings that are evaluatable expressions.  Default is -1/(d+2)
+    epses: float or 1d array, optional
+        Bandwidth constant to use.  If float, uses that value for the bandwidth.  If array, performs automatic bandwidth detection according to the algorithm given by Berry and Giannakis and Harlim.  Default is all powers of 2 from 2^-40 to 2^40.
+    rho_norm : bool, optional
+        Whether or not to normalize q and L by rho(x)^2.  Default is True (perform normalization)
+    metric : string
+        Metric to use for computing distance.  Default is "Euclidean".  See sklearn documentation for more options.
+    metric_params : dict
+        Additional parameters needed for estimating the metric.
+    verbosity : int, optional
+        Whether to print verbose output.  If 0 (default), no updates are printed.  If 1, prints results of automated bandwidth and dimensionality routines.  If 2, prints program status updates.
+
+    """
 
     def __init__(self, nneighbors=600, d=None,
-                 alpha='0', beta='-1/d', epses=2.**np.arange(-40, 41),
+                 alpha='0', beta='-1/d', epses=None,
                  rho_norm=False, metric='euclidean', metric_params=None, verbosity=0):
-        """Constructs the factory object.  The factory object can then be
-        called to make diffusion map bases of various boundary conditions.
-
-        Parameters
-        ----------
-        nneighbors : int or None, optional
-            Number of neighbors to include in constructing the diffusion map.  If None, all neighbors are used.  Default is 600 neighbors
-        d : int or None, optional
-            Dimension of the system. If None and alpha or beta settings require the dimensionality,
-            the dimension is estimated using the kernel density estimate,
-            if a kernel density estimate is performed.
-        alpha : float or string, optional
-            Parameter for left normalization of the Diffusion map.
-            Either a float, or a string that can be interpreted as a mathematical expression.
-            The variable "d" stands for dimension, so "1/d" sets the alpha to one over the system dimension.
-            Default is 0
-        beta : float or string, optional
-            Parameter for constructing the bandwidth function for the Diffusion map.  If rho is None, the bandwidth function will be set to q_\epsilon^beta, where q_\epsilon is an estimate of the density constructed using a kernel density estimate.  If rho is provided, this parameter is unused.  As with alpha, this will interpret strings that are evaluatable expressions.  Default is -1/(d+2)
-        epses: float or 1d array, optional
-            Bandwidth constant to use.  If float, uses that value for the bandwidth.  If array, performs automatic bandwidth detection according to the algorithm given by Berry and Giannakis and Harlim.  Default is all powers of 2 from 2^-40 to 2^40.
-        rho_norm : bool, optional
-            Whether or not to normalize q and L by rho(x)^2.  Default is True (perform normalization)
-        metric : string
-            Metric to use for computing distance.  Default is "Euclidean".  See sklearn documentation for more options.
-        metric_params : dict
-            Additional parameters needed for estimating the metric.
-        verbosity : int, optional
-            Whether to print verbose output.  If 0 (default), no updates are printed.  If 1, prints results of automated bandwidth and dimensionality routines.  If 2, prints program status updates.
-
-        """
         self.nneighbors = nneighbors
         self.d = d
         self.alpha = alpha
         self.beta = beta
-        self.epses = epses
         self.eps = None
         self.rho_norm = rho_norm
         self.metric = metric
         self.metric_params = metric_params
         self.verbosity = verbosity
+        if epses is not None:
+            self.epses = epses
+        else:
+            self.epses = 2.**np.arange(-40, 41)
 
     def fit(self, data, rho=None, point_weights=None):
         """Constructs the diffusion map on the dataset.
@@ -262,7 +263,7 @@ class DiffusionAtlas(object):
         return full_evecs, evals
 
 
-def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-40, 41), verbosity=0, metric='euclidean', metric_params=None, bandwidth_fxn=None):
+def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=None, verbosity=0, metric='euclidean', metric_params=None, bandwidth_fxn=None):
     """Code implementing Kernel Density estimatation.  Algorithm is heavily based on that presented in Berry, Giannakis, and Harlim, Phys. Rev. E. 91, 032915 (2015).
 
     Parameters
@@ -304,6 +305,10 @@ def kde(data, rho=None, nneighbors=None, d=None, nn_rho=8, epses=2.**np.arange(-
         data = np.transpose(data)
     if bandwidth_fxn is None:
         bandwidth_fxn = get_optimal_bandwidth_BH
+    if epses is not None:
+        epses = epses
+    else:
+        epses = 2.**np.arange(-40, 41)
     data = np.array([dat for dat in data])
 
     # Get nearest neighbors
