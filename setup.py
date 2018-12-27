@@ -20,7 +20,7 @@ def read(*names, **kwargs):
 
 setup(
     name='pyedgar',
-    version='0.1.0',
+    version='0.2.0',
     license='MIT license',
     description='Package for performing dynamical Galerkin expansion on trajectory data.',
     long_description='%s\n%s' % (
