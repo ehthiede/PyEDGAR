@@ -23,7 +23,7 @@ class TestBasisFormation(object):
         # Construct the diffusion map atlas.
         diff_atlas = pyedgar.basis.DiffusionAtlas()
         diff_atlas.fit(xax)
-        basis = diff_atlas.make_dirichlet_basis(k=n_evecs)[0]
+        basis = diff_atlas.make_dirichlet_basis(k=n_evecs)
         basis /= np.linalg.norm(basis, axis=0) * np.sign(basis[0])
         for i in range(n_evecs):
             basis_i = basis[:, i]
@@ -50,7 +50,7 @@ class TestBasisFormation(object):
         # Construct the diffusion map atlas.
         diff_atlas = pyedgar.basis.DiffusionAtlas()
         diff_atlas.fit(xax)
-        basis = diff_atlas.make_dirichlet_basis(k=n_evecs, in_domain=in_domain)[0]
+        basis = diff_atlas.make_dirichlet_basis(k=n_evecs, in_domain=in_domain)
         basis /= np.linalg.norm(basis, axis=0)
         for i in range(n_evecs):
             basis_i = basis[:, i]
