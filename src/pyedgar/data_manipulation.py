@@ -82,7 +82,7 @@ def flat_to_tlist(traj_2d, traj_edges):
 def get_initial_final_split(traj_edges, lag=1):
     """Returns the incides of the points in the flat trajectory of the initial and final sample points.
     In this context, initial means the first N-lag points, and final means the last N-lag points.
--
+
     Parameters
     ----------
     lag : int, optional

@@ -4,4 +4,6 @@ Reference
 .. toctree::
     :glob:
 
-    pyedgar*
+    basis
+    data_manipulation
+    galerkin

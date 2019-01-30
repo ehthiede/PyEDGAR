@@ -35,7 +35,7 @@ def compute_mfpt(basis, stateA, lag=1, dt=1.):
 
     """
     complement = [(A_i - 1.) for A_i in stateA]
-    soln = compute_fwd_FK(basis, complement, lag=lag, dt=dt)
+    soln = compute_FK(basis, complement, lag=lag, dt=dt)
     return soln
 
 
@@ -55,11 +55,36 @@ def compute_committor(basis, guess_committor, lag=1):
     Returns
     -------
     committor: dynamical basis object
-        List of trajectories containing the values of the committor at each point.
+        List of trajectories containing the values of the forward committor at each point.
 
     """
     h = [np.zeros(gi.shape) for gi in guess_committor]
-    soln = compute_fwd_FK(basis, h, r=guess_committor, lag=lag, dt=1.)
+    soln = compute_FK(basis, h, r=guess_committor, lag=lag, dt=1.)
+    return soln
+
+
+def compute_bwd_committor(basis, guess_committor, stationary_com, lag=1):
+    """Calculates the backward into state A as a function of
+    each point.
+
+    Parameters
+    ----------
+    basis : list of trajectories
+        Basis for the Galerkin expansion. Must be zero in state A and B
+    guess_committor : list of trajectories, optional
+        The value of the guess function obeying the inhomogenous boundary conditions.
+    stationary_com : list of trajectories
+        Values of the change of measure to the stationary distribution.
+    lag : int, optional
+        Number of timepoints in the future to use for the finite difference in the discrete-time generator.
+
+    Returns
+    -------
+    bwd_committor: dynamical basis object
+        List of trajectories containing the values of the backward_committor at each point.
+    """
+    h = [np.zeros(gi.shape) for gi in guess_committor]
+    soln = compute_adj_FK(basis, h, com=stationary_com, r=guess_committor, lag=lag, dt=1.)
     return soln
 
 
@@ -164,7 +189,7 @@ def _sort_esystem(evals, evec_collection):
     return sorted_evals, sorted_evecs
 
 
-def compute_fwd_FK(basis, h, r=None, lag=1, dt=1., return_coeffs=False):
+def compute_FK(basis, h, r=None, lag=1, dt=1., return_coeffs=False):
     """
     Solves the forward Feynman-Kac problem Lg=h on a domain D, with boundary
     conditions g=b on the complement of D. To account for the boundary
@@ -218,8 +243,83 @@ def compute_fwd_FK(basis, h, r=None, lag=1, dt=1., return_coeffs=False):
         return soln
 
 
-def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
+def compute_adj_FK(basis, h, com=None, r=None, lag=1, dt=1., return_coeffs=False):
     """
+    Solves the Feynman-Kac problem L^t dagger g=h on a domain D, with
+    boundary conditions g=b on the complement of D. Here L^t is the adjoint of
+    the generator with respect to the provided change of measure.  To account
+    for the boundary conditions, we solve the homogeneous problem
+    L^t g = h - L^t r, where r is the provided guess.
+
+    Parameters
+    ----------
+    traj_data : list of arrays OR single numpy array
+        Value of the basis functions at every time point.  Should only be nonzero
+        for points on the domain.
+    h : list of 1d arrays or single 1d array
+        Value of the RHS of the FK formula.  This should only be nonzero at
+        points on the domain, Domain.
+    com : list of 1d arrays or single 1d array, optional
+        Values of the change of measure against which to take the desired
+        adjoint.  If not provided, takes the adjoint against the sampled meaure
+    r : list of 1d arrays or single 1d array, optional
+        Value of the guess function.  Should be equal to b every point off of
+        the domain.  If not provided, the boundary conditions are assumed to be
+        homogeneous.
+    lag : int
+        Number of timepoints in the future to use for the finite difference in
+        the discrete-time generator.  If not provided, defaults to 1.
+    timestep : scalar, optional
+        Time between timepoints in the trajectory data.  Defaults to 1.
+
+    Returns
+    -------
+    g : list of arrays
+        Estimated solution to the Feynman-Kac problem.
+    coeffs : ndarray
+        Coefficients for the solution, only returned if return_coeffs is True.
+    """
+    h = [h_i.reshape(-1, 1).astype('float') for h_i in h]
+
+    L_basis = compute_generator(basis, lag=lag, dt=dt, com=com)
+    h_i = compute_stiffness_mat(basis, h, lag=lag, com=com)
+    if r is not None:
+        r = [r_i.reshape(-1, 1) for r_i in r]
+        L_guess = compute_generator(r, basis, lag=lag, dt=dt, com=com).T
+        h_i -= L_guess
+    coeffs = spl.solve(L_basis.T, h_i.ravel())
+
+    # Construct solution vector
+    N_traj = len(basis)
+    soln = [np.dot(basis[i], coeffs) for i in range(N_traj)]
+    if r is not None:
+        soln = [soln[i] + r[i].ravel() for i in range(N_traj)]
+
+    # Return calculated values
+    if return_coeffs:
+        return soln, coeffs
+    else:
+        return soln
+
+
+def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
+    """Computes the time-lagged correlation matrix between two sets of observables.
+
+    Parameters
+    ----------
+    Xs : list of trajectories
+        List of trajectories for the first set of observables.
+    Ys : list of trajectories, optional
+        List of trajectories for the second set of observables.  If None, set to be X.
+    lag : int, optional
+        Lag to use in the correlation matrix.  Default is one step.
+    com : list of trajectories
+        Values of the change of measure against which to compute the average
+
+    Returns
+    -------
+    K : numpy array
+        The time-lagged correlation matrix between X and Y.
     """
     if Ys is None:
         Ys = Xs
@@ -227,11 +327,11 @@ def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
     X_flat, traj_edges = tlist_to_flat(Xs)
     Y_flat = tlist_to_flat(Ys)[0]
     if com is not None:
-        com_flat = tlist_to_flat(com)
+        com_flat = tlist_to_flat(com)[0]
         X_flat *= com_flat
 
     # Split into initial, final points
-    initial_indices, final_indices = get_initial_final_split(traj_edges)
+    initial_indices, final_indices = get_initial_final_split(traj_edges, lag=lag)
     Y_t_lag = Y_flat[final_indices]
     X_t_0 = X_flat[initial_indices]
 
@@ -242,17 +342,36 @@ def compute_correlation_mat(Xs, Ys=None, lag=1, com=None):
 
 
 def compute_stiffness_mat(Xs, Ys=None, lag=1, com=None):
+    """Computes the stiffness matrix between two sets of observables.
+
+    Parameters
+    ----------
+    Xs : list of trajectories
+        List of trajectories for the first set of observables.
+    Ys : list of trajectories, optional
+        List of trajectories for the second set of observables.  If None, set to be X.
+    lag : int, optional
+        Lag to use in the correlation matrix.  Default is one step.
+        This is required as the stiffness is only evaluated over the initial points.
+    com : list of trajectories
+        Values of the change of measure against which to compute the average
+
+    Returns
+    -------
+    S : numpy array
+        The time-lagged stiffness matrix between X and Y.
+    """
     if Ys is None:
         Ys = Xs
     # Move to flat convention for easier processing.
     X_flat, traj_edges = tlist_to_flat(Xs)
     Y_flat = tlist_to_flat(Ys)[0]
     if com is not None:
-        com_flat = tlist_to_flat(com)
+        com_flat = tlist_to_flat(com)[0]
         X_flat *= com_flat
 
     # Split into initial, final points
-    initial_indices, final_indices = get_initial_final_split(traj_edges)
+    initial_indices, final_indices = get_initial_final_split(traj_edges, lag=lag)
     Y_t_0 = Y_flat[initial_indices]
     X_t_0 = X_flat[initial_indices]
     N = X_t_0.shape[0]
@@ -262,7 +381,25 @@ def compute_stiffness_mat(Xs, Ys=None, lag=1, com=None):
 
 def compute_generator(Xs, Ys=None, lag=1, dt=1., com=None):
     """
-    Computes the generator matrix.
+    Computes the matrix of inner product elements against the generator.
+
+    Parameters
+    ----------
+    Xs : list of trajectories
+        List of trajectories for the first set of observables.
+    Ys : list of trajectories, optional
+        List of trajectories for the second set of observables.  If None, set to be X.
+    lag : int, optional
+        Lag to use in the correlation matrix.  Default is one step.
+    dt: float, optional
+        time per step of dynamics. Default is one time unit.
+    com : list of trajectories
+        Values of the change of measure against which to compute the average.
+
+    Returns
+    -------
+    L : numpy array
+        The approximation to the inner product <X, L Y>.
     """
     if Ys is None:
         Ys = Xs
