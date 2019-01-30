@@ -69,6 +69,26 @@ def test_committor(make_random_walk):
         assert(np.all(error < error_tol))
 
 
+def test_bwd_committor(make_random_walk):
+    error_tol = 1E-10
+    basis, flat_traj, traj_edges = make_random_walk
+    basis = basis[:, 5:16].astype('float')
+    nbasis = 11
+    stateB = (flat_traj > 0.5).astype('float')
+    stat_com = np.ones((basis.shape[0], 1)).astype('float')
+    basis_list = flat_to_tlist(basis, traj_edges)
+    stateB_list = flat_to_tlist(stateB, traj_edges)
+    stat_com_list = flat_to_tlist(stat_com, traj_edges)
+    committor = galerkin.compute_bwd_committor(basis_list, stateB_list, stat_com_list)
+    committor = tlist_to_flat(committor)[0]
+    for i in range(nbasis):
+        basis_vector = basis[:, i]
+        committor_true = (i+1)*.25/3.
+        committor_i = committor[np.where(basis_vector > 0)[0]].flatten()
+        error = (committor_i - committor_true)
+        assert(np.all(error < error_tol))
+
+
 def test_change_of_measure(make_random_walk):
     error_tol = 1E-10
     basis, flat_traj, traj_edges = make_random_walk
