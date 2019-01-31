@@ -86,7 +86,7 @@ def get_initial_final_split(traj_edges, lag=1):
     Parameters
     ----------
     lag : int, optional
-        Number of timepoints in the future to look into the future for the transfer operator.  Default is the value provided when constructing the dynamical dataset object.
+        Number of timepoints in the future to look into the future for the transfer operator.  Default is 1.
 
     Returns
     -------
@@ -116,7 +116,8 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
     Parameters
     ----------
     traj_data : list of arrays OR tuple of two arrays OR single numpy array
-        Dynamical data on which to perform the delay embedding.  This can be of multiple types; if the type is not a dataset object, the type dictates the format of the data.  See documentation for the dynamical dataset object for the types.
+        Dynamical data on which to perform the delay embedding.  This can be of multiple types, and the type dictates the format of the data.
+        Specifically, it can be either a list of trajectories, the internal flattened format, or a single trajectory in the form of an array.
     n_embed : int
         The number of delay embeddings to perform.
     lag : int, optional
@@ -126,7 +127,7 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
 
     Returns
     -------
-    embedded_data : dataset object OR list of arrays OR tuple of two arrays OR single numpy array
+    embedded_data : list of arrays OR tuple of two arrays OR single numpy array
         Dynamical data with delay embedding performed, of the same type as the trajectory data.
 
     """
@@ -140,7 +141,7 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
         input_type = 'single_array'
         tlist = [traj_data]
     else:
-        raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, DynamicalDataset, or numpy array")
+        raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, or numpy array")
 
     embed_traj_list = []
     for i, traj_i in enumerate(tlist):
@@ -161,3 +162,27 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
         return tlist_to_flat(embed_traj_list)
     elif input_type == 'single_array':
         return embed_traj_list[0]
+
+
+# def _as_flat(traj_data):
+#     if type(traj_data) is list:
+#         input_type = 'list_of_trajs'
+#         flat, edges = tlist_to_flat(traj_data)
+#     elif type(traj_data) is tuple:
+#         input_type = 'fget_initial_final_split, tlist_to_flat, flat_to_tlistlat'
+#         flat, edges = traj_data
+#     elif type(traj_data) is np.ndarray:
+#         input_type = 'single_array'
+#         flat, edges = tlist_to_flat([traj_data])
+#     else:
+#         raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, or numpy array")
+#     return flat, edges, input_type
+#
+#
+# def _flat_to_orig(traj, edges, input_type):
+#     if input_type == 'list_of_trajs':
+#         return flat_to_tlist(traj, edges)
+#     elif input_type == 'flat':
+#         return traj, edges
+#     elif input_type == 'single_array':
+#         return traj
