@@ -31,7 +31,8 @@ class DiffusionAtlas(object):
         """
         if dmap_object is None:
             dmap_object = DiffusionMap.from_sklearn(alpha=0, k=500,
-                                                    bandwidth_type='1/d')
+                                                    bandwidth_type='-1/d',
+                                                    epsilon='bgh_generous')
         self.dmap = dmap_object
 
     @classmethod
