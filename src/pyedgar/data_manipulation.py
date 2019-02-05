@@ -164,6 +164,37 @@ def delay_embed(traj_data, n_embed, lag=1, verbosity=0):
         return embed_traj_list[0]
 
 
+def lift_function(function, n_embed, lag=1):
+    """
+    Lift a function into the delay-embedded space.
+    """
+    if type(function) is list:
+        input_type = 'list_of_trajs'
+        tlist = function
+    elif type(function) is tuple:
+        input_type = 'flat'
+        tlist = flat_to_tlist(function[0], function[1])
+    elif type(function) is np.ndarray:
+        input_type = 'single_array'
+        tlist = [function]
+    else:
+        raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, or numpy array")
+
+    lifted_fxn = []
+    for i, fxn_i in enumerate(tlist):
+        N_i = len(fxn_i)
+        if N_i - (lag * n_embed) <= 0:  # Must be longer than max embedding
+            continue
+        sub_fxn = fxn_i[int(n_embed/2):int(N_i-(n_embed/2))]
+        lifted_fxn.append(sub_fxn)
+
+    if input_type == 'list_of_trajs':
+        return lifted_fxn
+    elif input_type == 'flat':
+        return tlist_to_flat(lifted_fxn)
+    elif input_type == 'single_array':
+        return lifted_fxn[0]
+
 # def _as_flat(traj_data):
 #     if type(traj_data) is list:
 #         input_type = 'list_of_trajs'
