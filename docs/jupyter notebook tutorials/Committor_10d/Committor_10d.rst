@@ -2,7 +2,7 @@
 Committor Estimate on the Muller-Brown Potential
 ================================================
 
-.. code:: ipython3
+.. code:: python
 
     import matplotlib.pyplot as plt
     import numpy as np
@@ -27,7 +27,7 @@ Set Hyperparameters
 Here we specify a few hyperparameters. Thes can be varied to study the
 behavior of the scheme in various limits by the user.
 
-.. code:: ipython3
+.. code:: python
 
     ntraj = 1000
     trajectory_length = 5
@@ -36,7 +36,7 @@ behavior of the scheme in various limits by the user.
 Load and format the data
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: ipython3
+.. code:: python
 
     trajs = np.load('data/muller_brown_trajs.npy')[:ntraj, :trajectory_length, :dim] # Raw trajectory
     stateA = np.load('data/muller_brown_stateA.npy')[:ntraj, :trajectory_length] # 1 if in state A, 0 otherwise
@@ -61,7 +61,7 @@ packages that require a two-dimensional dataset. In particular, this is
 the format accepted by the Diffusion Atlas object. Trajectory start/stop
 points are then stored in the traj\_edges array.
 
-.. code:: ipython3
+.. code:: python
 
     flattened_trajs, traj_edges = tlist_to_flat(trajs)
     flattened_stateA = np.hstack(stateA)
@@ -76,14 +76,14 @@ points are then stored in the traj\_edges array.
 
 Finally, we load the reference, "true" committor for comparison.
 
-.. code:: ipython3
+.. code:: python
 
     ref_comm = np.load('reference/reference_committor.npy')
     ref_potential = np.load('reference/potential.npy')
     xgrid = np.load('reference/xgrid.npy')
     ygrid = np.load('reference/ygrid.npy')
 
-.. code:: ipython3
+.. code:: python
 
      # Plot the true committor.
     fig, ax = plt.subplots(1)
@@ -120,7 +120,7 @@ Build Basis Set
 We first build the basis set required for the DGA Calculation. In this
 demo, we will use the diffusion map basis.
 
-.. code:: ipython3
+.. code:: python
 
     diff_atlas = pyedgar.basis.DiffusionAtlas.from_sklearn(alpha=0, k=500, bandwidth_type='-1/d', epsilon='bgh_generous')
     diff_atlas.fit(flattened_trajs)
@@ -138,7 +138,7 @@ Here, we construct the basis and guess functions, and convert them back
 into lists of trajectories. The domain is the set of all sets out side
 of :math:`(A\cup B)^c`.
 
-.. code:: ipython3
+.. code:: python
 
     flat_basis, evals = diff_atlas.make_dirichlet_basis(300, in_domain=(1. - flattened_stateA - flattened_stateB), return_evals=True)
     flat_guess = diff_atlas.make_FK_soln(flattened_stateB, in_domain=(1. - flattened_stateA - flattened_stateB))
@@ -148,7 +148,7 @@ of :math:`(A\cup B)^c`.
 
 We plot the guess function and the first few basis functions.
 
-.. code:: ipython3
+.. code:: python
 
     fig, axes= plt.subplots(1, 5, figsize=(14,4.), sharex=True, sharey=True)
     axes[0].scatter(flattened_trajs[:,0], flattened_trajs[:,1], 
@@ -187,7 +187,7 @@ strongly with the harmonic degrees of freedom. Note that due to the
 boundary conditions, it is not precisely the dominant eigenvector of the
 harmonic degrees of freedom.
 
-.. code:: ipython3
+.. code:: python
 
     fig, (ax1) = plt.subplots(1, figsize=(3.5,3.5))
     
@@ -221,11 +221,11 @@ We are ready to compute the committor function using DGA. This can be
 done by passing the guess function and the basis to the the Galerkin
 module.
 
-.. code:: ipython3
+.. code:: python
 
     g = pyedgar.galerkin.compute_committor(basis, guess, lag=1)
 
-.. code:: ipython3
+.. code:: python
 
     fig, (ax1) = plt.subplots(1, figsize=(5.5,3.5))
     
@@ -244,7 +244,7 @@ module.
 
 Here, we plot how much the DGA estimate perturbs the Guess function
 
-.. code:: ipython3
+.. code:: python
 
     fig, (ax1) = plt.subplots(1, figsize=(3.5,3.5))
     
@@ -274,7 +274,7 @@ Compare against reference
 To compare against the reference values, we will interpolate the
 reference onto the datapoints usingy scipy's interpolate package.
 
-.. code:: ipython3
+.. code:: python
 
     import scipy.interpolate as spi
     
@@ -286,7 +286,7 @@ reference onto the datapoints usingy scipy's interpolate package.
 A comparison of our estimate with the True committor. While the estimate
 is good, we systematically underestimate the committor near (0, 0.5).
 
-.. code:: ipython3
+.. code:: python
 
     fig, axes = plt.subplots(1, 3, figsize=(16,3.5), sharex=True, sharey=True)
     (ax1, ax2, ax3) = axes
