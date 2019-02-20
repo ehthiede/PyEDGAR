@@ -88,7 +88,7 @@ def compute_bwd_committor(basis, guess_committor, stationary_com, lag=1):
     return soln
 
 
-def compute_change_of_measure(basis, lag=1, fix=1):
+def compute_change_of_measure(basis, lag=1):
     """Calculates the value of the change of measure to the stationary distribution for each datapoint.
 
     Parameters
@@ -97,8 +97,6 @@ def compute_change_of_measure(basis, lag=1, fix=1):
         Basis for the Galerkin expansion. Must be zero in state A and B
     lag : int, optional
         Number of timepoints in the future to use for the finite difference in the discrete-time generator.
-    fix : int, optional
-        Basis set whose coefficient to hold at a fixed value.
 
     Returns
     -------
