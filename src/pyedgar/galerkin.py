@@ -36,7 +36,12 @@ def compute_mfpt(basis, stateA, lag=1, dt=1.):
     """
     complement = [(A_i - 1.) for A_i in stateA]
     soln = compute_FK(basis, complement, lag=lag, dt=dt)
-    return soln
+
+    post_processed_soln = []
+    for ht_i in soln:
+        ht_i[ht_i < 0.] = 0.
+        post_processed_soln.append(ht_i)
+    return post_processed_soln
 
 
 def compute_committor(basis, guess_committor, lag=1):
@@ -60,7 +65,13 @@ def compute_committor(basis, guess_committor, lag=1):
     """
     h = [np.zeros(gi.shape) for gi in guess_committor]
     soln = compute_FK(basis, h, r=guess_committor, lag=lag, dt=1.)
-    return soln
+
+    post_processed_soln = []
+    for qi in soln:
+        qi[qi > 1.] = 1.
+        qi[qi < 0.] = 0.
+        post_processed_soln.append(qi)
+    return post_processed_soln
 
 
 def compute_bwd_committor(basis, guess_committor, stationary_com, lag=1):
@@ -85,7 +96,13 @@ def compute_bwd_committor(basis, guess_committor, stationary_com, lag=1):
     """
     h = [np.zeros(gi.shape) for gi in guess_committor]
     soln = compute_adj_FK(basis, h, com=stationary_com, r=guess_committor, lag=lag, dt=1.)
-    return soln
+
+    post_processed_soln = []
+    for qi in soln:
+        qi[qi > 1.] = 1.
+        qi[qi < 0.] = 0.
+        post_processed_soln.append(qi)
+    return post_processed_soln
 
 
 def compute_change_of_measure(basis, lag=1):
@@ -106,6 +123,10 @@ def compute_change_of_measure(basis, lag=1):
     """
     evals, evecs = compute_esystem(basis, lag, left=True, right=False)
     com = [ev_i[:, 0] for ev_i in evecs]
+
+    # Ensure positivity
+    com_sign = np.sign(np.sum(com))
+    com = [ci * com_sign for ci in com]
     return com
 
 
