@@ -122,12 +122,16 @@ def compute_change_of_measure(basis, lag=1):
 
     """
     evals, evecs = compute_esystem(basis, lag, left=True, right=False)
-    com = [ev_i[:, 0] for ev_i in evecs]
+    com = [np.real(ev_i[:, 0]) for ev_i in evecs]
 
     # Ensure positivity
     com_sign = np.sign(np.sum(com))
     com = [ci * com_sign for ci in com]
-    return com
+    post_processed_soln = []
+    for ci in com:
+        ci[ci < 0.] = 0.
+        post_processed_soln.append(ci)
+    return post_processed_soln
 
 
 def compute_esystem(basis, lag=1, dt=1., left=False, right=True):
