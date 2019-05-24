@@ -8,6 +8,7 @@ Contents
    readme
    installation
    usage
+   jupyter notebook tutorials/index
    reference/index
    contributing
    authors

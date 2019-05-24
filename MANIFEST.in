@@ -4,6 +4,9 @@ graft src
 graft ci
 graft tests
 
+prune docs/_build
+prune examples/.ipynb_checkpoints
+
 include .bumpversion.cfg
 include .coveragerc
 include .cookiecutterrc
