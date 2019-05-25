@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
+import pytest
 
 from pyedgar import data_manipulation as manip
 from pyedgar.data_manipulation import delay_embed
@@ -19,6 +20,32 @@ def test_flat_to_tlist(working_flat_and_tlist):
     test_tlist = manip.flat_to_tlist(flat, traj_edges)
     for test_traj, traj in zip(test_tlist, tlist):
         assert(np.all(test_traj == traj))
+
+
+def test__as_flat(working_flat_and_tlist):
+    flat, traj_edges, tlist = working_flat_and_tlist
+    from_tlist, from_tlist_edges, from_tlist_type = manip._as_flat(tlist)
+    assert(np.array_equal(from_tlist, flat))
+    assert(np.array_equal(from_tlist_edges, traj_edges))
+    assert(from_tlist_type == "list_of_trajs")
+
+    from_flat, from_flat_edges, from_flat_type = manip._as_flat((flat, traj_edges))
+    assert(np.array_equal(from_flat, flat))
+    assert(np.array_equal(from_flat_edges, traj_edges))
+    assert(from_flat_type == "flat")
+
+
+@pytest.mark.parametrize('input_type', ['list_of_trajs', 'flat'])
+def test__flat_to_orig(working_flat_and_tlist, input_type):
+    flat, traj_edges, tlist = working_flat_and_tlist
+    rebuilt_data = manip._flat_to_orig(flat, traj_edges, input_type)
+    if input_type is 'list_of_trajs':
+        for rebuilt_i, tlist_i in zip(rebuilt_data, tlist):
+            assert(np.array_equal(rebuilt_i, tlist_i))
+    elif input_type is 'flat':
+        new_flat, new_edges = rebuilt_data
+        assert(np.array_equal(new_flat, flat))
+        assert(np.array_equal(traj_edges, new_edges))
 
 
 class TestDelayEmbedding():

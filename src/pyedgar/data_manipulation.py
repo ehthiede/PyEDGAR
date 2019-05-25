@@ -195,25 +195,26 @@ def lift_function(function, n_embed, lag=1):
     elif input_type == 'single_array':
         return lifted_fxn[0]
 
-# def _as_flat(traj_data):
-#     if type(traj_data) is list:
-#         input_type = 'list_of_trajs'
-#         flat, edges = tlist_to_flat(traj_data)
-#     elif type(traj_data) is tuple:
-#         input_type = 'fget_initial_final_split, tlist_to_flat, flat_to_tlistlat'
-#         flat, edges = traj_data
-#     elif type(traj_data) is np.ndarray:
-#         input_type = 'single_array'
-#         flat, edges = tlist_to_flat([traj_data])
-#     else:
-#         raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, or numpy array")
-#     return flat, edges, input_type
-#
-#
-# def _flat_to_orig(traj, edges, input_type):
-#     if input_type == 'list_of_trajs':
-#         return flat_to_tlist(traj, edges)
-#     elif input_type == 'flat':
-#         return traj, edges
-#     elif input_type == 'single_array':
-#         return traj
+
+def _as_flat(traj_data):
+    if type(traj_data) is list:
+        input_type = 'list_of_trajs'
+        flat, edges = tlist_to_flat(traj_data)
+    elif type(traj_data) is tuple:
+        input_type = 'flat'
+        flat, edges = traj_data
+    elif type(traj_data) is np.ndarray:
+        input_type = 'single_array'
+        flat, edges = tlist_to_flat([traj_data])
+    else:
+        raise ValueError("Unable to recognize the format of the input from the type: type must either be tuple, list, or numpy array")
+    return flat, edges, input_type
+
+
+def _flat_to_orig(traj, edges, input_type):
+    if input_type == 'list_of_trajs':
+        return flat_to_tlist(traj, edges)
+    elif input_type == 'flat':
+        return traj, edges
+    elif input_type == 'single_array':
+        return traj
