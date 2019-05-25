@@ -12,6 +12,7 @@ import scipy.sparse as sps
 import scipy.sparse.linalg as spsl
 
 from pydiffmap.diffusion_map import DiffusionMap
+from .data_manipulation import _flat_to_orig, _as_flat
 
 
 class DiffusionAtlas(object):
@@ -63,21 +64,16 @@ class DiffusionAtlas(object):
 
         Parameters
         ----------
-        data : 2D array-like
-            Two-dimensional dataset used to create the diffusion map.
-        rho : 1d array-like or None, optional
-            Bandwidth function to be used in the variable bandwidth kernel.
-            If None, the code estimates the density of the data q using a kernel density estimate,
-            and sets the bandwidth to q_\epsilon^beta.
-        point_weights : 1D array-like or None, optional
-            Importance sampling weights for each datapoint.
-
+        data : 2D array-like OR list of trajectories OR Flat data format
+            Dataset on which to construct the diffusion map.
         """
         # Default Parameter Selection and Type Cleaning
-        data = np.asanyarray(data)
+        data, edges, input_type = _as_flat(data)
         if len(data.shape) == 1:
             data = data.reshape(-1, 1)
         self.data = data
+        self.edges = edges
+        self.input_type = input_type
         self.dmap.construct_Lmat(data)
         return self
 
@@ -90,16 +86,16 @@ class DiffusionAtlas(object):
         ----------
         k : int
             Number of basis functions to create.
-        in_domain : 1D array-like, optional
-            Array of the same length as the data, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.  Naturally, this must be the length as the current dataset.  If None (default), all points assumed to be in the domain.
+        in_domain : 1D array-like, OR list of such arrays, OR flat data format, optional
+            Array of the same shape as the data, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.  Naturally, this must be the length as the current dataset.  If None (default), all points assumed to be in the domain.
         return_evals : Boolean, optional
             Whether or not to return the eigenvalues as well.  These are useful for out of sample extension.
 
 
         Returns
         -------
-        basis : 2D numpy array
-            The basis functions.
+        basis : Dataset of same type as the data
+            The basis functions evaluated on each datapoint.  Of the same type as the input data.
         evals : 1D numpy array, optional
             The eigenvalues corresponding to each basis vector.  Only returned if return_evals is True.
 
@@ -108,6 +104,7 @@ class DiffusionAtlas(object):
         npoints = submat.shape[0]
         # Take the submatrix if necessary
         if in_domain is not None:
+            in_domain = _as_flat(in_domain)[0].ravel()
             domain = np.where(in_domain > 0)[0]
             submat = submat[domain][:, domain]
         evals, evecs = spsl.eigs(submat, k, which='LR')
@@ -121,6 +118,7 @@ class DiffusionAtlas(object):
             full_evecs[domain, :] = np.real(evecs)
         else:
             full_evecs = evecs
+        full_evecs = _flat_to_orig(full_evecs, self.edges, self.input_type)
         if return_evals:
             return full_evecs, evals
         else:
@@ -132,25 +130,28 @@ class DiffusionAtlas(object):
 
         Parameters
         ----------
-        Y : array-like, shape (n_query, n_features)
+        Y : 2D array-like OR list of trajectories OR flat data format
             Data for which to perform the out-of-sample extension.
-        in_domain : 1D array-like, optional
-            Array of the same length as the Y, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.
-        basis : 2D numpy array
+        in_domain : 1D array-like, OR list of such arrays, OR flat data format
+            Dataset of the same shape as the input datapoints, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.
+        basis : 2D array-like OR list of trajectories OR Flat data format
             The basis functions.
         evals : 1D numpy array
             The eigenvalues corresponding to each basis vector.
 
         Returns
         -------
-        basis_extended : numpy array, shape (n_query, n_eigenvectors)
+        basis_extended : Dataset of same type as the data
             Transformed value of the given values.
         """
+        Y, edges, Y_input_type = _as_flat(Y)
         Y = np.asanyarray(Y)
+        in_domain = _as_flat(in_domain)[0].ravel()
+        basis = _as_flat(basis)[0]
         if len(Y.shape) == 1:
             Y = Y.reshape(-1, 1)
         if np.array_equal(Y, self.dmap.data):
-            return basis
+            return _flat_to_orig(basis, edges, Y_input_type)
 
         if self.dmap.oos == "nystroem":
             basis_extended = nystroem_oos(self.dmap, Y, basis, evals)
@@ -160,7 +161,7 @@ class DiffusionAtlas(object):
             raise ValueError('Did not understand the OOS algorithm specified')
         outside_locs = np.where(1 - in_domain)[0]
         basis_extended[outside_locs] = 0.
-        return basis_extended
+        return _flat_to_orig(basis_extended, edges, Y_input_type)
 
     def make_FK_soln(self, b, in_domain):
         """
@@ -170,16 +171,18 @@ class DiffusionAtlas(object):
 
         Parameters
         ----------
-        b : 1d array-like
-            Right hand side of the Feynman-Kac equation.  Should be of the same length as the data.
-        in_domain : 1D array-like
-            Array of the same length as the data, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.  Naturally, this must be the length as the current dataset.  If None (default), all points assumed to be in the domain.
+        b : 1D array-like, OR list of such arrays, OR flat data format.
+            Dataset of the same shape as the input datapoints.  Right hand side of the Feynman-Kac equation.
+        in_domain : 1D array-like, OR list of such arrays, OR flat data format.
+            Dataset of the same shape as the input datapoints, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.
 
         Returns
         -------
-        soln : 1d array-like
+        soln : Dataset of same type as the data. 
             Solution to the Feynman-Kac problem.
         """
+        in_domain = _as_flat(in_domain)[0].ravel()
+        b = _as_flat(b)[0].ravel()
         domain_locs = np.where(in_domain)[0]
         complement_locs = np.where(1. - in_domain)[0]
 
@@ -194,7 +197,7 @@ class DiffusionAtlas(object):
         soln_sub = spsl.spsolve(L_sub, b[domain_locs] - Lb)
         soln = np.copy(b)
         soln[domain_locs] = soln_sub
-        return soln
+        return _flat_to_orig(soln, self.edges, self.input_type)
 
     def extend_FK_soln(self, soln, Y, b, in_domain):
         """
@@ -203,20 +206,24 @@ class DiffusionAtlas(object):
 
         Parameters
         ----------
-        soln : 1d array-like
-            Solution for the old dataset.  Should be of the same length as the data used in the fit.
-        Y : array-like, shape (n_query, n_features)
+        soln : Dataset of same type as the data. 
+            Solution to the Feynman-Kac problem on the original type.
+        Y : 2D array-like OR list of trajectories OR flat data format
             Data for which to perform the out-of-sample extension.
-        b : array-like, shape (n_query)
+        b :1D array-like, OR list of such arrays, OR flat data format.
             Values of the right hand-side for the OOS points.
-        in_domain : array-like, shape=(n_query)
-            Array where element i is 1 or True if Y[i] is in the domain and 0 or False otherwise.
+        in_domain : 1D array-like, OR list of such arrays, OR flat data format.
+            Dataset of the same shape as the input datapoints, where each element is 1 or True if that datapoint is inside the domain, and 0 or False if it is in the domain.
 
         Returns
         -------
-        extended_soln: 1d array-like
-            Value of the solution, extended to the new datapoints.
+        extended_soln : Dataset of same type as the data.
+            Solution to the Feynman-Kac problem.
         """
+        Y, edges, Y_input_type = _as_flat(Y)
+        b = _as_flat(b)[0].ravel()
+        in_domain = _as_flat(in_domain)[0].ravel()
+
         Y = np.asanyarray(Y)
         if len(Y.shape) == 1:
             Y = Y.reshape(-1, 1)
@@ -224,12 +231,11 @@ class DiffusionAtlas(object):
         Y_sub = Y[domain_locs]
         L_yx, L_yy = _get_L_oos(self.dmap, Y_sub)
         # L_yx, L_yy = _get_L_oos(self.dmap, Y
-        print(L_yx.shape, L_yy.shape, Y.shape, soln.shape)
         soln_sub = b[domain_locs] - L_yx.dot(soln)
         soln_sub /= L_yy
         soln = np.copy(b)
         soln[domain_locs] = np.copy(soln_sub)
-        return soln
+        return _flat_to_orig(soln, edges, Y_input_type)
 
 
 def nystroem_oos(dmap_object, Y, evecs, evals):
